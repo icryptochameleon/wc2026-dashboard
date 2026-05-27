@@ -2,6 +2,8 @@
 
 4人で行った2026 FIFAワールドカップ「国取りドラフト」のリアルタイム順位・スコアを追跡するスマホ/PC両対応ダッシュボード。
 
+🌐 **公開URL: <https://icryptochameleon.github.io/wc2026-dashboard/>**
+
 ## 技術スタック
 - Vite + React + TypeScript
 - Tailwind CSS (ダークモード)
@@ -61,18 +63,25 @@ npm run preview # ビルド成果物をプレビュー
 
 未設定でも手動入力モードで完全に動作します。
 
-## GitHub Pages へのデプロイ
+## GitHub Pages 更新
+
+コードを編集 → push → 公開URL に反映する流れ:
 
 ```powershell
-# 初回のみ: package.json の homepage を自分のリポジトリ URL に変更
-# 例: "homepage": "https://<your-name>.github.io/wc2026-dashboard"
+# ① コード編集 → main にコミット & push
+git add .
+git commit -m "..."
+git push
 
-npm install --save-dev gh-pages  # (既にdevDepsにあります)
-npm run deploy  # gh-pages ブランチに push
+# ② 公開サイトを更新
+npm run deploy   # 内部で npm run build → gh-pages -d dist
 ```
 
-GitHub のリポジトリ設定で `Pages` → `Source: gh-pages` を選択。
-`base: './'` 指定なのでサブパス・ルートどちらでも動作。
+数分後 <https://icryptochameleon.github.io/wc2026-dashboard/> に反映されます。
+
+リポジトリ: <https://github.com/icryptochameleon/wc2026-dashboard>
+
+vite.config.ts は `base: './'` 指定なのでサブパス・ルートどちらでも動作。
 
 ## ファイル構成
 
