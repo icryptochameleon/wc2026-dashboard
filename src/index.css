@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-navy-900 text-slate-100 font-body antialiased;
+    background-image: radial-gradient(
+        circle at 20% 0%,
+        rgba(212, 175, 55, 0.08) 0%,
+        transparent 35%
+      ),
+      radial-gradient(
+        circle at 80% 110%,
+        rgba(59, 130, 246, 0.08) 0%,
+        transparent 40%
+      );
+    background-attachment: fixed;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+  h1, h2, h3, h4 {
+    @apply font-heading tracking-wide;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl bg-navy-800/80 backdrop-blur border border-white/5 shadow-xl;
+  }
+  .card-header {
+    @apply px-4 py-3 border-b border-white/5 flex items-center justify-between;
+  }
+  .card-body {
+    @apply p-4;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold;
+  }
+  .scroll-x {
+    @apply overflow-x-auto;
+    scrollbar-width: thin;
+    scrollbar-color: #d4af37 transparent;
+  }
+  .scroll-x::-webkit-scrollbar {
+    height: 6px;
+  }
+  .scroll-x::-webkit-scrollbar-thumb {
+    background: #d4af37;
+    border-radius: 3px;
+  }
+  .badge-dot {
+    @apply inline-block w-2.5 h-2.5 rounded-full;
+  }
+  .text-gold {
+    @apply text-gold-500;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold transition-colors;
+  }
+  .btn-primary {
+    @apply btn bg-gold-500 text-navy-900 hover:bg-gold-400;
+  }
+  .btn-ghost {
+    @apply btn bg-white/5 hover:bg-white/10 text-slate-100;
+  }
+  .input {
+    @apply w-full rounded-lg bg-navy-900/80 border border-white/10 px-3 py-2 text-sm
+      focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500;
+  }
+}
+
+.live-dot {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 9999px;
+  background-color: #ef4444;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8);
+  animation: live-pulse 1.4s infinite;
+}
+
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+  70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* safe-area for iOS notch */
+.safe-bottom {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+}
+.safe-top {
+  padding-top: calc(0.5rem + env(safe-area-inset-top, 0px));
+}

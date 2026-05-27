@@ -1,0 +1,19 @@
+node_modules
+dist
+dist-tsc
+.DS_Store
+*.local
+.vscode/*
+!.vscode/extensions.json
+.env
+.env.local
+.env.development
+.env.production
+*.log
+
+# TS / Vite caches
+*.tsbuildinfo
+vite.config.ts.timestamp-*.mjs
+
+# Local preview tool config (not portable)
+.claude/launch.json
