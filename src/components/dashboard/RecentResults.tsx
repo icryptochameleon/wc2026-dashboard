@@ -41,11 +41,8 @@ export function RecentResults() {
           const ag = m.score.fullTime.away ?? 0;
           const winnerSide = hg > ag ? 'home' : hg < ag ? 'away' : 'draw';
           const winnerPlayer = winnerSide === 'home' ? hp : winnerSide === 'away' ? ap : null;
-          const ptsAwarded = winnerSide === 'draw'
-            ? 0
-            : m.stage === 'GROUP_STAGE'
-              ? SCORING.GROUP_WIN
-              : 0; // ノックアウトの進出ボーナスは別途
+          const loserPlayer = winnerSide === 'home' ? ap : winnerSide === 'away' ? hp : null;
+          const isGroup = m.stage === 'GROUP_STAGE';
           return (
             <li key={m.id} className="px-4 py-3 text-sm">
               <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
@@ -81,13 +78,28 @@ export function RecentResults() {
                   )}
                 </div>
               </div>
-              {winnerPlayer && ptsAwarded > 0 && (
-                <div className="mt-1 text-[10px] text-right">
-                  <span style={{ color: PLAYERS[winnerPlayer].color }}>
-                    {settings.playerNames[winnerPlayer]}
-                  </span>
-                  <span className="text-slate-400"> +{NF.format(ptsAwarded)}pt</span>
+              {isGroup && winnerSide !== 'draw' && (
+                <div className="mt-1 text-[10px] text-right flex items-center justify-end gap-2">
+                  {winnerPlayer && (
+                    <span>
+                      <span style={{ color: PLAYERS[winnerPlayer].color }}>
+                        {settings.playerNames[winnerPlayer]}
+                      </span>
+                      <span className="text-green-400"> +{NF.format(SCORING.GROUP_WIN)}pt</span>
+                    </span>
+                  )}
+                  {loserPlayer && (
+                    <span>
+                      <span style={{ color: PLAYERS[loserPlayer].color }}>
+                        {settings.playerNames[loserPlayer]}
+                      </span>
+                      <span className="text-red-400"> {NF.format(SCORING.GROUP_LOSS)}pt</span>
+                    </span>
+                  )}
                 </div>
+              )}
+              {isGroup && winnerSide === 'draw' && (hp || ap) && (
+                <div className="mt-1 text-[10px] text-right text-slate-500">引き分け ±0</div>
               )}
             </li>
           );

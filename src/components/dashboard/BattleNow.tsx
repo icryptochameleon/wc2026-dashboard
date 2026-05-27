@@ -75,22 +75,28 @@ export function BattleNow() {
                   )}
                 </div>
               </div>
-              {(homePlayer || awayPlayer) && (
+              {m.stage === 'GROUP_STAGE' && (homePlayer || awayPlayer) && (
                 <div className="text-xs space-y-1 bg-navy-900/40 rounded-lg p-2">
                   {homePlayer && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       🎯 <span style={{ color: homeColor }}>{homeName}</span>
                       <span className="text-slate-400">
-                        {getTeamNameJa(m.homeTeam.name)} 勝利で +{NF.format(SCORING.GROUP_WIN)}pt
+                        {getTeamNameJa(m.homeTeam.name)} 勝利で
                       </span>
+                      <span className="text-green-400">+{NF.format(SCORING.GROUP_WIN)}pt</span>
+                      <span className="text-slate-600">/ 敗戦で</span>
+                      <span className="text-red-400">{NF.format(SCORING.GROUP_LOSS)}pt</span>
                     </div>
                   )}
                   {awayPlayer && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       🎯 <span style={{ color: awayColor }}>{awayName}</span>
                       <span className="text-slate-400">
-                        {getTeamNameJa(m.awayTeam.name)} 勝利で +{NF.format(SCORING.GROUP_WIN)}pt
+                        {getTeamNameJa(m.awayTeam.name)} 勝利で
                       </span>
+                      <span className="text-green-400">+{NF.format(SCORING.GROUP_WIN)}pt</span>
+                      <span className="text-slate-600">/ 敗戦で</span>
+                      <span className="text-red-400">{NF.format(SCORING.GROUP_LOSS)}pt</span>
                     </div>
                   )}
                 </div>

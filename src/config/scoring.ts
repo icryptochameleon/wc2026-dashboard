@@ -1,7 +1,9 @@
 export const SCORING = {
+  // 予選リーグ (1試合ごと加算)
   GROUP_WIN: 3000,
   GROUP_DRAW: 0,
-  GROUP_LOSS: 0,
+  GROUP_LOSS: -3000,
+  // トーナメント (最終到達ステージのみ・排他)
   ROUND_OF_32: 10000,
   ROUND_OF_16: 20000,
   QUARTER_FINAL: 30000,

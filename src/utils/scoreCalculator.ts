@@ -36,11 +36,12 @@ export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
       let losses = 0;
       let goalsFor = 0;
       let goalsAgainst = 0;
-      let teamPoints = 0;
+      let groupTeamPoints = 0;
+      let knockoutTeamPoints = 0;
       let furthestStage: MatchStage = 'GROUP_STAGE';
       let finalResult: TeamScore['finalResult'] = null;
 
-      // グループステージ
+      // ───────── 予選リーグ (1試合ごと加算: 勝 +3000 / 分 0 / 負 -3000) ─────────
       const groupMatches = matches.filter(
         (m) =>
           m.stage === 'GROUP_STAGE' &&
@@ -56,8 +57,7 @@ export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
         const opp = side === 'home' ? m.awayTeam.name : m.homeTeam.name;
         if (tg > og) {
           wins++;
-          teamPoints += SCORING.GROUP_WIN;
-          groupPts += SCORING.GROUP_WIN;
+          groupTeamPoints += SCORING.GROUP_WIN;
           breakdown.push({
             label: `グループ勝利 vs ${opp}`,
             points: SCORING.GROUP_WIN,
@@ -65,74 +65,87 @@ export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
           });
         } else if (tg === og) {
           draws++;
+          // 引き分けは ±0 (内訳には記録しない)
         } else {
           losses++;
-        }
-      }
-
-      // ノックアウト：チームがそのステージに「出現」したら、進出ボーナス加算
-      const stageBonus: Partial<Record<MatchStage, number>> = {
-        LAST_32: SCORING.ROUND_OF_32,
-        LAST_16: SCORING.ROUND_OF_16,
-        QUARTER_FINALS: SCORING.QUARTER_FINAL,
-        SEMI_FINALS: SCORING.SEMI_FINAL,
-      };
-      const stagesToCheck: MatchStage[] = [
-        'LAST_32',
-        'LAST_16',
-        'QUARTER_FINALS',
-        'SEMI_FINALS',
-        'THIRD_PLACE',
-        'FINAL',
-      ];
-
-      for (const stage of stagesToCheck) {
-        const m = matches.find(
-          (m) => m.stage === stage && teamInMatch(team, m) !== null,
-        );
-        if (!m) continue;
-
-        const bonus = stageBonus[stage];
-        if (bonus) {
-          teamPoints += bonus;
-          knockoutPts += bonus;
+          groupTeamPoints += SCORING.GROUP_LOSS;
           breakdown.push({
-            label: `${stageLabel(stage)} 進出`,
-            points: bonus,
-            type: stageToType(stage),
+            label: `グループ敗戦 vs ${opp}`,
+            points: SCORING.GROUP_LOSS,
+            type: 'GROUP_LOSS',
           });
         }
-        if (stageRank(stage) > stageRank(furthestStage)) furthestStage = stage;
-
-        // 最終ボーナス
-        if (stage === 'FINAL' && isFinished(m)) {
-          const side = teamInMatch(team, m)!;
-          const tg = (side === 'home' ? m.score.fullTime.home : m.score.fullTime.away) ?? 0;
-          const og = (side === 'home' ? m.score.fullTime.away : m.score.fullTime.home) ?? 0;
-          if (tg > og) {
-            teamPoints += SCORING.CHAMPION;
-            knockoutPts += SCORING.CHAMPION;
-            finalResult = 'CHAMPION';
-            breakdown.push({ label: '🏆 優勝', points: SCORING.CHAMPION, type: 'CHAMPION' });
-          } else if (tg < og) {
-            teamPoints += SCORING.RUNNER_UP;
-            knockoutPts += SCORING.RUNNER_UP;
-            finalResult = 'RUNNER_UP';
-            breakdown.push({ label: '🥈 準優勝', points: SCORING.RUNNER_UP, type: 'RUNNER_UP' });
-          }
-        }
-        if (stage === 'THIRD_PLACE' && isFinished(m)) {
-          const side = teamInMatch(team, m)!;
-          const tg = (side === 'home' ? m.score.fullTime.home : m.score.fullTime.away) ?? 0;
-          const og = (side === 'home' ? m.score.fullTime.away : m.score.fullTime.home) ?? 0;
-          if (tg > og) {
-            teamPoints += SCORING.THIRD_PLACE;
-            knockoutPts += SCORING.THIRD_PLACE;
-            finalResult = 'THIRD_PLACE';
-            breakdown.push({ label: '🥉 3位', points: SCORING.THIRD_PLACE, type: 'THIRD_PLACE' });
-          }
-        }
       }
+
+      // ───────── トーナメント (排他式: 最終到達ステージのポイントのみ) ─────────
+      // チームが出場したノックアウトステージを最も奥のものから判定する。
+      const stagesByRank: MatchStage[] = [
+        'FINAL',
+        'THIRD_PLACE',
+        'SEMI_FINALS',
+        'QUARTER_FINALS',
+        'LAST_16',
+        'LAST_32',
+      ];
+      let knockoutAward: { label: string; points: number; type: ScoreBreakdown['type'] } | null = null;
+
+      for (const stage of stagesByRank) {
+        const m = matches.find((x) => x.stage === stage && teamInMatch(team, x) !== null);
+        if (!m) continue;
+        furthestStage = stage;
+
+        if (stage === 'FINAL') {
+          if (isFinished(m)) {
+            const side = teamInMatch(team, m)!;
+            const tg = (side === 'home' ? m.score.fullTime.home : m.score.fullTime.away) ?? 0;
+            const og = (side === 'home' ? m.score.fullTime.away : m.score.fullTime.home) ?? 0;
+            if (tg > og) {
+              finalResult = 'CHAMPION';
+              knockoutAward = { label: '🏆 優勝', points: SCORING.CHAMPION, type: 'CHAMPION' };
+            } else {
+              finalResult = 'RUNNER_UP';
+              knockoutAward = { label: '🥈 準優勝', points: SCORING.RUNNER_UP, type: 'RUNNER_UP' };
+            }
+          } else {
+            // 決勝進出済み・未終了 → 最低でも準優勝確定
+            knockoutAward = { label: '🏟 決勝進出 (暫定: 準優勝扱い)', points: SCORING.RUNNER_UP, type: 'RUNNER_UP' };
+          }
+        } else if (stage === 'THIRD_PLACE') {
+          if (isFinished(m)) {
+            const side = teamInMatch(team, m)!;
+            const tg = (side === 'home' ? m.score.fullTime.home : m.score.fullTime.away) ?? 0;
+            const og = (side === 'home' ? m.score.fullTime.away : m.score.fullTime.home) ?? 0;
+            if (tg > og) {
+              finalResult = 'THIRD_PLACE';
+              knockoutAward = { label: '🥉 3位', points: SCORING.THIRD_PLACE, type: 'THIRD_PLACE' };
+            } else {
+              // 4位 = SF 敗退と同じ 50,000
+              knockoutAward = { label: '4位 (SF敗退と同点)', points: SCORING.SEMI_FINAL, type: 'SEMI_FINAL' };
+            }
+          } else {
+            // 3位決定戦 未消化 → SF 敗退分だけ暫定確定
+            knockoutAward = { label: '🏟 3位決定戦進出 (暫定: SF敗退分)', points: SCORING.SEMI_FINAL, type: 'SEMI_FINAL' };
+          }
+        } else if (stage === 'SEMI_FINALS') {
+          knockoutAward = { label: 'ベスト4 到達', points: SCORING.SEMI_FINAL, type: 'SEMI_FINAL' };
+        } else if (stage === 'QUARTER_FINALS') {
+          knockoutAward = { label: 'ベスト8 到達', points: SCORING.QUARTER_FINAL, type: 'QUARTER_FINAL' };
+        } else if (stage === 'LAST_16') {
+          knockoutAward = { label: 'ベスト16 到達', points: SCORING.ROUND_OF_16, type: 'ROUND_OF_16' };
+        } else if (stage === 'LAST_32') {
+          knockoutAward = { label: 'ベスト32 到達', points: SCORING.ROUND_OF_32, type: 'ROUND_OF_32' };
+        }
+        break; // 最も奥のステージで打ち切り (排他)
+      }
+
+      if (knockoutAward) {
+        knockoutTeamPoints = knockoutAward.points;
+        breakdown.push(knockoutAward);
+      }
+
+      const teamPoints = groupTeamPoints + knockoutTeamPoints;
+      groupPts += groupTeamPoints;
+      knockoutPts += knockoutTeamPoints;
 
       // 敗退判定: 出場した最終ステージで負けていれば eliminated
       const eliminated = isEliminated(team, matches);
@@ -179,37 +192,6 @@ export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
     rank++;
   }
   return scores;
-}
-
-function stageToType(stage: MatchStage): ScoreBreakdown['type'] {
-  switch (stage) {
-    case 'LAST_32':
-      return 'ROUND_OF_32';
-    case 'LAST_16':
-      return 'ROUND_OF_16';
-    case 'QUARTER_FINALS':
-      return 'QUARTER_FINAL';
-    case 'SEMI_FINALS':
-      return 'SEMI_FINAL';
-    case 'THIRD_PLACE':
-      return 'THIRD_PLACE';
-    case 'FINAL':
-      return 'CHAMPION';
-    default:
-      return 'GROUP_WIN';
-  }
-}
-
-function stageLabel(stage: MatchStage): string {
-  return {
-    GROUP_STAGE: 'グループ',
-    LAST_32: 'ベスト32',
-    LAST_16: 'ベスト16',
-    QUARTER_FINALS: 'ベスト8',
-    SEMI_FINALS: 'ベスト4',
-    THIRD_PLACE: '3位決定戦',
-    FINAL: '決勝',
-  }[stage];
 }
 
 function isEliminated(team: string, matches: MatchResult[]): boolean {

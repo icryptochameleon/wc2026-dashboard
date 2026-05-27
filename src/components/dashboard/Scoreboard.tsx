@@ -91,7 +91,7 @@ export function Scoreboard() {
         </table>
       </div>
       <div className="px-4 py-2 text-[10px] text-slate-500 border-t border-white/5 hidden sm:block">
-        予選 = グループステージで獲得したポイント · T = トーナメント進出ボーナス + 最終順位
+        予選 = グループ勝敗の合計 (勝 +3,000 / 分 0 / 負 -3,000) · T = 最終到達ステージのポイント (排他・累積しない)
       </div>
     </section>
   );
