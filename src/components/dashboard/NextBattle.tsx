@@ -4,11 +4,12 @@ import { getUpcomingMatches } from '../../utils/scoreCalculator';
 import { getPlayerOfTeam, PLAYERS } from '../../config/teams';
 import { getFlag, getTeamNameJa } from '../../utils/teamUtils';
 import { countdownTo, formatJSTDateLabel, formatJSTTime } from '../../utils/dateUtils';
+import { OddsBar } from './OddsBar';
 
 const DEFAULT_LIMIT = 5;
 
 export function NextBattle() {
-  const { matches, settings } = useGame();
+  const { matches, settings, getMatchOdds } = useGame();
   const [expanded, setExpanded] = useState(false);
   const upcoming = useMemo(() => {
     const all = getUpcomingMatches(matches, 200);
@@ -64,6 +65,7 @@ export function NextBattle() {
                 const homeName = homeP ? settings.playerNames[homeP] : '—';
                 const awayName = awayP ? settings.playerNames[awayP] : '—';
                 const cd = countdownTo(m.utcDate);
+                const odds = getMatchOdds(m);
                 return (
                   <div
                     key={m.id}
@@ -115,6 +117,17 @@ export function NextBattle() {
                         </span>
                       )}
                     </div>
+                    {odds && (
+                      <div className="mt-2">
+                        <OddsBar
+                          odds={odds}
+                          homeColor={homeColor}
+                          awayColor={awayColor}
+                          homeLabel={getTeamNameJa(m.homeTeam.name)}
+                          awayLabel={getTeamNameJa(m.awayTeam.name)}
+                        />
+                      </div>
+                    )}
                     {sameOwner && (
                       <div className="mt-2 text-xs bg-amber-500/15 text-amber-300 rounded px-2 py-1">
                         ⚠️ 同オーナー対決 — どちらが勝っても所属チームの一方が脱落

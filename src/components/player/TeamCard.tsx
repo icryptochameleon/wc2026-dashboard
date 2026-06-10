@@ -2,8 +2,15 @@ import type { TeamScore } from '../../types';
 import { STAGE_LABEL_JA } from '../../config/scoring';
 import { getFlag, getTeamNameJa } from '../../utils/teamUtils';
 import { getGroupOfTeam } from '../../config/teams';
+import { useGame } from '../../context/GameContext';
 
 const NF = new Intl.NumberFormat('ja-JP');
+
+function formatProb(p: number): string {
+  if (p >= 0.10) return `${(p * 100).toFixed(0)}%`;
+  if (p >= 0.001) return `${(p * 100).toFixed(1)}%`;
+  return '<0.1%';
+}
 
 function statusBadge(score: TeamScore): { icon: string; label: string; cls: string } {
   if (score.finalResult === 'CHAMPION')
@@ -18,8 +25,10 @@ function statusBadge(score: TeamScore): { icon: string; label: string; cls: stri
 }
 
 export function TeamCard({ score, color }: { score: TeamScore; color: string }) {
+  const { championOdds } = useGame();
   const group = getGroupOfTeam(score.team);
   const badge = statusBadge(score);
+  const champProb = championOdds[score.team];
   return (
     <div className="card overflow-hidden">
       <div
@@ -35,6 +44,11 @@ export function TeamCard({ score, color }: { score: TeamScore; color: string }) 
             </div>
             <div className="text-xs text-slate-400 mt-0.5">
               Group {group ?? '?'} · {STAGE_LABEL_JA[score.currentStage]}
+              {champProb !== undefined && !score.eliminated && (
+                <span className="ml-1.5 text-gold-500" title="Polymarket 優勝確率">
+                  👑 {formatProb(champProb)}
+                </span>
+              )}
             </div>
           </div>
           <span className={`pill border ${badge.cls}`}>

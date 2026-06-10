@@ -3,11 +3,12 @@ import { getLiveMatches } from '../../utils/scoreCalculator';
 import { getFlag, getTeamNameJa } from '../../utils/teamUtils';
 import { getPlayerOfTeam, PLAYERS } from '../../config/teams';
 import { SCORING } from '../../config/scoring';
+import { OddsBar } from './OddsBar';
 
 const NF = new Intl.NumberFormat('ja-JP');
 
 export function BattleNow() {
-  const { matches, settings } = useGame();
+  const { matches, settings, getMatchOdds } = useGame();
   const live = getLiveMatches(matches);
   if (live.length === 0) return null;
 
@@ -28,6 +29,7 @@ export function BattleNow() {
           const awayName = awayPlayer ? settings.playerNames[awayPlayer] : null;
           const homeColor = homePlayer ? PLAYERS[homePlayer].color : '#888';
           const awayColor = awayPlayer ? PLAYERS[awayPlayer].color : '#888';
+          const odds = getMatchOdds(m);
           return (
             <div key={m.id} className="p-4 space-y-3">
               <div className="flex items-center justify-between text-xs text-slate-400">
@@ -75,6 +77,15 @@ export function BattleNow() {
                   )}
                 </div>
               </div>
+              {odds && (
+                <OddsBar
+                  odds={odds}
+                  homeColor={homeColor}
+                  awayColor={awayColor}
+                  homeLabel={getTeamNameJa(m.homeTeam.name)}
+                  awayLabel={getTeamNameJa(m.awayTeam.name)}
+                />
+              )}
               {m.stage === 'GROUP_STAGE' && (homePlayer || awayPlayer) && (
                 <div className="text-xs space-y-1 bg-navy-900/40 rounded-lg p-2">
                   {homePlayer && (

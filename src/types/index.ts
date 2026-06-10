@@ -113,6 +113,26 @@ export interface ChampionOddsEntry {
   probability: number;
 }
 
+/** Polymarket 試合別マーケット (1X2 moneyline) の確率 (0-1) */
+export interface PolyMatchOdds {
+  /** 正準チーム名 (アプリ表記) */
+  homeTeam: string;
+  awayTeam: string;
+  /** Polymarket イベントのキックオフ UTC */
+  startTime: string;
+  home: number;
+  draw: number;
+  away: number;
+  /** CLOB の Yes トークン id (ライブ更新用) */
+  tokenIds: { home?: string; draw?: string; away?: string };
+  /** CLOB ミッドポイントでライブ更新された値か */
+  live: boolean;
+  updatedAt: string;
+}
+
+/** チーム正準名 → 優勝確率 (0-1, Polymarket 実勢) */
+export type ChampionOddsMap = Record<string, number>;
+
 export interface AppSettings {
   apiKey: string;
   oddsApiKey: string;

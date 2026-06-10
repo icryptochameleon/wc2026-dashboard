@@ -1,5 +1,6 @@
 import { BattleNow } from '../components/dashboard/BattleNow';
 import { NextBattle } from '../components/dashboard/NextBattle';
+import { OddsPortfolio } from '../components/dashboard/OddsPortfolio';
 import { RecentResults } from '../components/dashboard/RecentResults';
 import { Scoreboard } from '../components/dashboard/Scoreboard';
 import { ScoreChart } from '../components/dashboard/ScoreChart';
@@ -24,6 +25,7 @@ export default function DashboardPage() {
       )}
       <BattleNow />
       <Scoreboard />
+      <OddsPortfolio />
       <div className="grid gap-4 lg:grid-cols-2">
         <NextBattle />
         <RecentResults />

@@ -1,9 +1,10 @@
 import { createContext, useContext, useMemo, useEffect, type ReactNode } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useMatchData } from '../hooks/useMatchData';
+import { useOddsData, type MatchOddsView } from '../hooks/useOddsData';
 import { calculatePlayerScores } from '../utils/scoreCalculator';
 import { generateDefaultSchedule } from '../data/defaultSchedule';
-import type { AppSettings, MatchResult, PlayerId, PlayerScore } from '../types';
+import type { AppSettings, ChampionOddsMap, MatchResult, PlayerId, PlayerScore } from '../types';
 import { PLAYERS } from '../config/teams';
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -32,6 +33,10 @@ interface GameContextValue {
   refresh: () => Promise<void>;
   prevRanks: Record<PlayerId, number>;
   updateMatch: (updated: MatchResult) => void;
+  /** Polymarket 優勝確率 (チーム正準名 → 0-1) */
+  championOdds: ChampionOddsMap;
+  oddsUpdatedAt: string | null;
+  getMatchOdds: (m: MatchResult) => MatchOddsView | null;
 }
 
 const Ctx = createContext<GameContextValue | null>(null);
@@ -51,6 +56,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     autoRefresh: settings.autoRefresh,
     fallbackMatches: fallback,
   });
+
+  const { championOdds, oddsUpdatedAt, getMatchOdds } = useOddsData(matches);
 
   const playerScores = useMemo(() => {
     const base = calculatePlayerScores(matches);
@@ -86,6 +93,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     refresh,
     prevRanks,
     updateMatch,
+    championOdds,
+    oddsUpdatedAt,
+    getMatchOdds,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

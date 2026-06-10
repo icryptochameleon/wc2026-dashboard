@@ -11,11 +11,12 @@ const NF = new Intl.NumberFormat('ja-JP');
 export function PlayerDetail() {
   const { playerId: rawId } = useParams();
   const navigate = useNavigate();
-  const { playerScores, settings } = useGame();
+  const { playerScores, settings, championOdds } = useGame();
   const playerId = (PLAYER_IDS.includes(rawId as PlayerId) ? rawId : 'A') as PlayerId;
   const score = playerScores.find((p) => p.id === playerId)!;
   const profile = PLAYERS[playerId];
   const displayName = settings.playerNames[playerId];
+  const portfolioProb = profile.teams.reduce((acc, t) => acc + (championOdds[t] ?? 0), 0);
 
   const teamList = Object.values(score.teamScores).sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
@@ -74,6 +75,11 @@ export function PlayerDetail() {
             </div>
             <div className="text-xs text-slate-400 mt-1">
               {profile.teams.length} チーム保有 · 第 {score.rank} 位
+              {portfolioProb > 0 && (
+                <span className="ml-1.5 text-gold-500" title="持ちチームの Polymarket 優勝確率合計">
+                  👑 {(portfolioProb * 100).toFixed(1)}%
+                </span>
+              )}
             </div>
           </div>
           <div className="text-right">
