@@ -1,14 +1,24 @@
-import { createContext, useContext, useMemo, useEffect, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useEffect, type ReactNode } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { useMatchData } from '../hooks/useMatchData';
+import { useMatchData, type FeedState } from '../hooks/useMatchData';
+import { useEspnLive } from '../hooks/useEspnLive';
 import { useOddsData, type MatchOddsView } from '../hooks/useOddsData';
 import { calculatePlayerScores } from '../utils/scoreCalculator';
+import { mergeMatches } from '../utils/mergeMatches';
 import { generateDefaultSchedule } from '../data/defaultSchedule';
-import type { AppSettings, ChampionOddsMap, MatchResult, PlayerId, PlayerScore } from '../types';
+import type {
+  AppSettings,
+  ChampionOddsMap,
+  ManualOverride,
+  MatchResult,
+  PlayerId,
+  PlayerScore,
+  ResultsFile,
+} from '../types';
 import { PLAYERS } from '../config/teams';
 
 const DEFAULT_SETTINGS: AppSettings = {
-  apiKey: '',
+  apiKey: '', // 旧フィールド (現在は未使用 — キーは GitHub Actions Secret に移行)
   oddsApiKey: '',
   theme: 'dark',
   timezone: 'Asia/Tokyo',
@@ -24,16 +34,23 @@ const DEFAULT_SETTINGS: AppSettings = {
 interface GameContextValue {
   settings: AppSettings;
   setSettings: (next: AppSettings | ((p: AppSettings) => AppSettings)) => void;
+  /** マージ済みの最終形 (手動上書き > オーナー上書き > 正準 + ESPN速報) */
   matches: MatchResult[];
-  setMatches: (next: MatchResult[]) => void;
   playerScores: PlayerScore[];
   loading: boolean;
   error: string | null;
-  lastFetch: string | null;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<void> | void;
   prevRanks: Record<PlayerId, number>;
+  /** この端末の手動上書きを書き込む (試合丸ごと渡すと差分を記録) */
   updateMatch: (updated: MatchResult) => void;
-  /** Polymarket 優勝確率 (チーム正準名 → 0-1) */
+  clearOverride: (matchId: string) => void;
+  clearAllOverrides: () => void;
+  manualOverrides: Record<string, ManualOverride>;
+  /** フィード状態 */
+  feedState: FeedState;
+  feedMeta: ResultsFile['meta'] | null;
+  generatedAt: string | null;
+  /** Polymarket オッズ */
   championOdds: ChampionOddsMap;
   oddsUpdatedAt: string | null;
   getMatchOdds: (m: MatchResult) => MatchOddsView | null;
@@ -49,13 +66,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
     C: 1,
     D: 1,
   });
+  const [manualOverrides, setManualOverrides] = useLocalStorage<Record<string, ManualOverride>>(
+    'wc2026_manual_overrides_v1',
+    {},
+  );
 
   const fallback = useMemo(() => generateDefaultSchedule(), []);
-  const { matches, loading, error, lastFetch, refresh, setMatches } = useMatchData({
-    apiKey: settings.apiKey,
-    autoRefresh: settings.autoRefresh,
-    fallbackMatches: fallback,
-  });
+  const {
+    matches: canonical,
+    meta: feedMeta,
+    feedState,
+    generatedAt,
+    loading,
+    error,
+    refresh,
+  } = useMatchData({ fallbackMatches: fallback });
+
+  // ESPN ライブ速報 (正準にフィールドパッチとして重なる)
+  const espnPatches = useEspnLive(canonical);
+
+  const matches = useMemo(
+    () => mergeMatches(canonical, espnPatches, manualOverrides),
+    [canonical, espnPatches, manualOverrides],
+  );
 
   const { championOdds, oddsUpdatedAt, getMatchOdds } = useOddsData(matches);
 
@@ -68,31 +101,57 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const next: Record<PlayerId, number> = { A: 1, B: 1, C: 1, D: 1 };
     for (const p of playerScores) next[p.id] = p.rank;
-    // 比較し、差がある場合のみ保存（無限ループ防止）
     const same = (Object.keys(next) as PlayerId[]).every((k) => next[k] === prevRanks[k]);
     if (!same) {
-      // 5秒後に更新（直前の順位を比較に使えるようにバッファ）
       const t = setTimeout(() => setPrevRanks(next), 5000);
       return () => clearTimeout(t);
     }
   }, [playerScores, prevRanks, setPrevRanks]);
 
-  const updateMatch = (updated: MatchResult) => {
-    setMatches(matches.map((m) => (m.id === updated.id ? updated : m)));
-  };
+  /** 手動上書き: 渡された試合と正準の差分をこの端末に記録 (リフレッシュでも消えない) */
+  const updateMatch = useCallback(
+    (updated: MatchResult) => {
+      setManualOverrides((prev) => ({
+        ...prev,
+        [updated.id]: {
+          status: updated.status,
+          home: updated.score.fullTime.home,
+          away: updated.score.fullTime.away,
+        },
+      }));
+    },
+    [setManualOverrides],
+  );
+
+  const clearOverride = useCallback(
+    (matchId: string) => {
+      setManualOverrides((prev) => {
+        const next = { ...prev };
+        delete next[matchId];
+        return next;
+      });
+    },
+    [setManualOverrides],
+  );
+
+  const clearAllOverrides = useCallback(() => setManualOverrides({}), [setManualOverrides]);
 
   const value: GameContextValue = {
     settings,
     setSettings,
     matches,
-    setMatches,
     playerScores,
     loading,
     error,
-    lastFetch,
     refresh,
     prevRanks,
     updateMatch,
+    clearOverride,
+    clearAllOverrides,
+    manualOverrides,
+    feedState,
+    feedMeta,
+    generatedAt,
     championOdds,
     oddsUpdatedAt,
     getMatchOdds,

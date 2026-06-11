@@ -11,7 +11,7 @@ const STATUSES: { value: MatchStatus; label: string }[] = [
 ];
 
 export function ManualInput() {
-  const { matches, setMatches } = useGame();
+  const { matches, updateMatch, clearOverride, manualOverrides } = useGame();
   const [filter, setFilter] = useState<'ALL' | MatchStage>('ALL');
   const [search, setSearch] = useState('');
 
@@ -31,8 +31,10 @@ export function ManualInput() {
       .sort((a, b) => new Date(a.utcDate).getTime() - new Date(b.utcDate).getTime());
   }, [matches, filter, search]);
 
+  // 上書きはこの端末の localStorage に記録され、自動更新でも消えない
   const updateStatus = (id: string, status: MatchStatus) => {
-    setMatches(matches.map((m) => (m.id === id ? { ...m, status } : m)));
+    const m = matches.find((x) => x.id === id);
+    if (m) updateMatch({ ...m, status });
   };
 
   const updateScore = (
@@ -40,22 +42,19 @@ export function ManualInput() {
     side: 'home' | 'away',
     value: string,
   ) => {
+    const m = matches.find((x) => x.id === id);
+    if (!m) return;
     const num = value === '' ? null : Math.max(0, Math.floor(Number(value)));
-    setMatches(
-      matches.map((m) => {
-        if (m.id !== id) return m;
-        return {
-          ...m,
-          score: {
-            ...m.score,
-            fullTime: {
-              ...m.score.fullTime,
-              [side]: Number.isNaN(num as number) ? null : num,
-            },
-          },
-        };
-      }),
-    );
+    updateMatch({
+      ...m,
+      score: {
+        ...m.score,
+        fullTime: {
+          ...m.score.fullTime,
+          [side]: Number.isNaN(num as number) ? null : num,
+        },
+      },
+    });
   };
 
   return (
@@ -131,7 +130,20 @@ export function ManualInput() {
                   {getFlag(m.awayTeam.name)} {getTeamNameJa(m.awayTeam.name)}
                 </span>
               </div>
-              <div className="mt-1.5 flex items-center justify-end gap-1">
+              <div className="mt-1.5 flex items-center justify-end gap-1 flex-wrap">
+                {manualOverrides[m.id] && (
+                  <>
+                    <span className="text-[10px] text-amber-400 mr-auto">
+                      ✏️ この端末で上書き中
+                    </span>
+                    <button
+                      onClick={() => clearOverride(m.id)}
+                      className="text-[10px] px-2 py-0.5 rounded-full border border-amber-400/40 text-amber-300 hover:bg-amber-400/10"
+                    >
+                      上書きクリア
+                    </button>
+                  </>
+                )}
                 {STATUSES.map((s) => (
                   <button
                     key={s.value}

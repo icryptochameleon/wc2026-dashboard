@@ -1,16 +1,26 @@
 import { useGame } from '../../context/GameContext';
 import { PLAYER_IDS, PLAYERS } from '../../config/teams';
 import type { PlayerId } from '../../types';
-import { ApiKeyInput } from './ApiKeyInput';
+import { DataSourceStatus } from './DataSourceStatus';
 import { ManualInput } from './ManualInput';
-import { generateDefaultSchedule } from '../../data/defaultSchedule';
 
 export function Settings() {
-  const { settings, setSettings, setMatches } = useGame();
+  const { settings, setSettings, clearAllOverrides, refresh } = useGame();
 
-  const resetSchedule = () => {
-    if (confirm('保存済みの試合データをリセットして初期スケジュールに戻しますか?')) {
-      setMatches(generateDefaultSchedule());
+  const resetLocalData = () => {
+    if (
+      confirm(
+        'この端末の手動上書きとキャッシュをすべて消去し、最新の結果フィードを取り直しますか?\n(全員共有のデータには影響しません)',
+      )
+    ) {
+      clearAllOverrides();
+      try {
+        localStorage.removeItem('wc2026_matches_v2');
+        localStorage.removeItem('wc2026_odds_cache');
+      } catch {
+        /* ignore */
+      }
+      refresh();
     }
   };
 
@@ -45,7 +55,7 @@ export function Settings() {
         </div>
       </section>
 
-      <ApiKeyInput />
+      <DataSourceStatus />
 
       <ManualInput />
 
@@ -54,11 +64,8 @@ export function Settings() {
           <h3 className="font-heading text-base flex items-center gap-2">⚙️ その他</h3>
         </header>
         <div className="card-body space-y-3">
-          <button
-            onClick={resetSchedule}
-            className="btn-ghost text-sm"
-          >
-            🔄 試合データをリセット
+          <button onClick={resetLocalData} className="btn-ghost text-sm">
+            🔄 この端末のデータをリセット
           </button>
           <p className="text-[10px] text-slate-500">
             タイムゾーン: Asia/Tokyo (JST) で固定。テーマ: ダークモード。

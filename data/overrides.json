@@ -1,0 +1,4 @@
+{
+  "comment": "オーナーによる全員向けスコア上書き。キーは試合ID (fx-<home>-<away>-<YYYYMMDD>)。例: \"fx-mexico-south-africa-20260611\": { \"status\": \"FINISHED\", \"home\": 2, \"away\": 1 }。次の Actions 実行 (~5分) で全員に配信される。",
+  "overrides": {}
+}

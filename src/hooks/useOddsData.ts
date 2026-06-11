@@ -101,13 +101,31 @@ async function fetchChampionOdds(): Promise<ChampionOddsMap> {
   return map;
 }
 
-/** 直近 72 時間の試合別マーケット (suffix なし slug = ベースの 1X2 イベントのみ) */
+/**
+ * 直近 10 日分の試合別マーケット (suffix なし slug = ベースの 1X2 イベントのみ)。
+ * 1 試合あたり 7 前後の派生イベント (exact-score 等) が生成されるため、
+ * limit=100 の 1 ページでは数試合分しか入らない — offset ページネーションで全件取得する。
+ */
 async function fetchMatchOddsList(): Promise<PolyMatchOdds[]> {
   const min = new Date(Date.now() - 6 * 3600 * 1000).toISOString(); // 進行中試合も拾う
-  const max = new Date(Date.now() + 72 * 3600 * 1000).toISOString();
-  const events = (await fetchGammaEvents(
-    `series_id=${MATCH_SERIES_ID}&closed=false&end_date_min=${encodeURIComponent(min)}&end_date_max=${encodeURIComponent(max)}&limit=100`,
-  )) as RawGammaEvent[];
+  const max = new Date(Date.now() + 10 * 24 * 3600 * 1000).toISOString();
+  const base = `series_id=${MATCH_SERIES_ID}&closed=false&end_date_min=${encodeURIComponent(min)}&end_date_max=${encodeURIComponent(max)}&limit=100`;
+
+  const events: RawGammaEvent[] = [];
+  const seenIds = new Set<string>();
+  for (let page = 0; page < 8; page++) {
+    const batch = (await fetchGammaEvents(`${base}&offset=${page * 100}`)) as (RawGammaEvent & {
+      id?: string | number;
+    })[];
+    for (const ev of batch) {
+      const key = String(ev.id ?? ev.slug ?? Math.random());
+      if (!seenIds.has(key)) {
+        seenIds.add(key);
+        events.push(ev);
+      }
+    }
+    if (batch.length < 100) break;
+  }
 
   const out: PolyMatchOdds[] = [];
   const now = new Date().toISOString();

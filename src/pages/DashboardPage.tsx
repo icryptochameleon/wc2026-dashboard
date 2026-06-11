@@ -8,17 +8,15 @@ import { useGame } from '../context/GameContext';
 import { Link } from 'react-router-dom';
 
 export default function DashboardPage() {
-  const { settings } = useGame();
+  const { feedState } = useGame();
   return (
     <div className="space-y-4">
-      {!settings.apiKey && (
+      {feedState === 'synthetic' && (
         <div className="card border-amber-500/30 bg-amber-500/5">
           <div className="px-4 py-3 text-sm text-amber-200 flex items-center justify-between gap-3 flex-wrap">
-            <span>
-              ⚠️ API キー未設定 — 試合結果は手動入力モードです
-            </span>
+            <span>⚠️ 結果フィードに未接続 — 初期スケジュールを表示中です (回線復帰で自動更新)</span>
             <Link to="/settings" className="btn-primary text-xs px-3 py-1">
-              設定へ →
+              状態を見る →
             </Link>
           </div>
         </div>

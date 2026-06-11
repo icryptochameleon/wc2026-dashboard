@@ -42,6 +42,33 @@ export interface MatchResult {
     halfTime?: { home: number | null; away: number | null };
   };
   scorers?: { player: string; minute: number; team: string }[];
+  /** football-data.org の数値 id (参考) */
+  fdId?: string;
+  /** ESPN イベント id (ライブ速報レイヤーのクロスワーク) */
+  espnId?: string;
+  /** ESPN が試合終了を報じている (公式 FINISHED 待ちの表示用フラグ) */
+  espnFinal?: boolean;
+  /** データ出所: football-data / espn / override (オーナー上書き) / manual (この端末) */
+  source?: string;
+}
+
+/** data ブランチ results.json のエンベロープ */
+export interface ResultsFile {
+  meta: {
+    generatedAt: string;
+    sources: { footballData: string; espn: string };
+    lastFullSweep?: string | null;
+    unmatchedEspn?: string[];
+    errors?: string[];
+  };
+  matches: MatchResult[];
+}
+
+/** この端末だけの手動上書き (試合 id → 部分パッチ) */
+export interface ManualOverride {
+  status?: MatchStatus;
+  home?: number | null;
+  away?: number | null;
 }
 
 export interface TeamStanding {
