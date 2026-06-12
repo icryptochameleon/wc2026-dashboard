@@ -51,8 +51,10 @@ export function mergeMatch(
     const kickoff = Date.parse(m.utcDate);
     const fullTimePlausible =
       Number.isFinite(kickoff) && Date.now() - kickoff >= MIN_FULL_TIME_MS;
-    // ESPN の試合終了報は、時間的に妥当なら確定として採用 (正準待ちでポイントを止めない)
-    const promoteFinal = espnIsFinal && fullTimePlausible;
+    // ESPN の試合終了報は、時間的に妥当かつスコアが揃っていれば確定として採用
+    // (スコア null のまま昇格すると scoreCalculator の ?? 0 で幻の 0-0 引分が確定してしまう)
+    const promoteFinal =
+      espnIsFinal && fullTimePlausible && espn.home != null && espn.away != null;
     const cappedStatus: MatchStatus = promoteFinal
       ? 'FINISHED'
       : espnIsFinal

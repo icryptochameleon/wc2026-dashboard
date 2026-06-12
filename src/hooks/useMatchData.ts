@@ -66,6 +66,13 @@ export function useMatchData({ fallbackMatches }: UseMatchDataOpts) {
   const heldRef = useRef(held);
   heldRef.current = held;
 
+  // 壁時計ティック: フィード凍結中でもライブ窓判定 (ポーリング間隔) を再評価する
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick((v) => v + 1), 60 * 1000);
+    return () => clearInterval(t);
+  }, []);
+
   const accept = useCallback((envelope: ResultsFile, state: FeedState) => {
     const current = heldRef.current;
     // 単調増加ガード: 既保持より古い generatedAt は捨てる
@@ -114,6 +121,7 @@ export function useMatchData({ fallbackMatches }: UseMatchDataOpts) {
   }, [accept]);
 
   const hasLive = useMemo(() => {
+    void tick; // 60秒毎に再評価
     const now = Date.now();
     return held.matches.some((m) => {
       if (['LIVE', 'IN_PLAY', 'PAUSED'].includes(m.status)) return true;
@@ -122,7 +130,7 @@ export function useMatchData({ fallbackMatches }: UseMatchDataOpts) {
         Number.isFinite(t) && now >= t - 15 * 60 * 1000 && now <= t + 150 * 60 * 1000 && m.status !== 'FINISHED'
       );
     });
-  }, [held.matches]);
+  }, [held.matches, tick]);
 
   useEffect(() => {
     fetchCanonical();

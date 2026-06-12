@@ -81,8 +81,19 @@ export function useEspnLive(matches: MatchResult[]): Record<string, EspnPatch> {
   const [finals, setFinals] = useState<FinalsMap>(loadFinals);
   const failsRef = useRef(0);
 
+  // 壁時計ティック: フィードが凍結していてもライブ窓の開閉を再評価する
+  // (これが無いと、窓が開く前に開いたタブでは ESPN レイヤーが永遠に起動しない)
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick((v) => v + 1), 60 * 1000);
+    return () => clearInterval(t);
+  }, []);
+
   const recordFinals = useCallback((next: Record<string, EspnPatch>) => {
-    const finalEntries = Object.entries(next).filter(([, p]) => p.status === 'FINISHED');
+    // スコアの無い確定報は永続化しない (canonical 到着まで再生され続けるため)
+    const finalEntries = Object.entries(next).filter(
+      ([, p]) => p.status === 'FINISHED' && p.home != null && p.away != null,
+    );
     if (finalEntries.length === 0) return;
     setFinals((prev) => {
       const merged = { ...prev };
@@ -109,6 +120,7 @@ export function useEspnLive(matches: MatchResult[]): Record<string, EspnPatch> {
   }, []);
 
   const windowMatches = useMemo(() => {
+    void tick; // 60秒毎に窓を再評価
     const now = Date.now();
     return matches.filter((m) => {
       if (m.status === 'FINISHED') return false;
@@ -116,7 +128,7 @@ export function useEspnLive(matches: MatchResult[]): Record<string, EspnPatch> {
       const t = Date.parse(m.utcDate);
       return Number.isFinite(t) && now >= t - 15 * 60 * 1000 && now <= t + 150 * 60 * 1000;
     });
-  }, [matches]);
+  }, [matches, tick]);
 
   const active = windowMatches.length > 0;
 
