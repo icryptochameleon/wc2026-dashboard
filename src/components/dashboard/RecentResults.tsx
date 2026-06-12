@@ -49,7 +49,17 @@ export function RecentResults() {
                 <span>
                   {formatJSTDateLabel(m.utcDate)} {formatJSTTime(m.utcDate)}
                 </span>
-                <span>{m.group ?? m.stage.replace(/_/g, ' ')}</span>
+                <span className="flex items-center gap-1.5">
+                  {m.espnFinal && (
+                    <span
+                      className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                      title="ESPN 速報による確定 — 公式データ取込後に正式確定"
+                    >
+                      速報
+                    </span>
+                  )}
+                  {m.group ?? m.stage.replace(/_/g, ' ')}
+                </span>
               </div>
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                 <div className="text-right flex items-center justify-end gap-1.5">

@@ -24,17 +24,20 @@ function rank(s: MatchStatus): number {
   return STATUS_RANK[s] ?? 0;
 }
 
+/** グループステージの試合がこれより早く正規に終わることはない (45+HT15+45=105分) */
+const MIN_FULL_TIME_MS = 105 * 60 * 1000;
+
 /**
  * 1 試合分の最終形を組み立てる。優先順位:
  *   1. この端末の手動上書き (完全勝ち)
  *   2. 正準データの source:'override' (オーナー上書き — そのまま)
  *   3. 正準データ + ESPN フィールドパッチ
  *      - 正準が FINISHED なら ESPN は触らない
- *      - ESPN のステータスは IN_PLAY/PAUSED 止まり (FINISHED は espnFinal フラグのみ)
  *      - ステータスは前進のみ (正準 IN_PLAY を ESPN の TIMED で巻き戻さない)
- *
- * 得点計算 (calculatePlayerScores) は status==='FINISHED' しか数えないため、
- * ポイント確定は常に 正準 FINISHED / オーナー上書き / 手動入力 のどれかで起こる。
+ *      - ESPN の FINISHED は原則 espnFinal フラグ止まり (IN_PLAY にキャップ) だが、
+ *        キックオフから 105 分以上経過していれば本物の FINISHED に昇格する
+ *        (正準フィードの更新が遅延してもポイントが確定するように。
+ *         espnFinal フラグは「速報確定」バッジとして残し、後で正準 FINISHED が来たら消える)
  */
 export function mergeMatch(
   canonical: MatchResult,
@@ -45,12 +48,21 @@ export function mergeMatch(
 
   if (espn && m.status !== 'FINISHED' && m.source !== 'override') {
     const espnIsFinal = espn.status === 'FINISHED';
-    const cappedStatus: MatchStatus = espnIsFinal ? 'IN_PLAY' : espn.status;
+    const kickoff = Date.parse(m.utcDate);
+    const fullTimePlausible =
+      Number.isFinite(kickoff) && Date.now() - kickoff >= MIN_FULL_TIME_MS;
+    // ESPN の試合終了報は、時間的に妥当なら確定として採用 (正準待ちでポイントを止めない)
+    const promoteFinal = espnIsFinal && fullTimePlausible;
+    const cappedStatus: MatchStatus = promoteFinal
+      ? 'FINISHED'
+      : espnIsFinal
+        ? 'IN_PLAY'
+        : espn.status;
     const nextStatus = rank(cappedStatus) > rank(m.status) ? cappedStatus : m.status;
     m = {
       ...m,
       status: nextStatus,
-      minute: espn.minute ?? m.minute,
+      minute: nextStatus === 'FINISHED' ? null : (espn.minute ?? m.minute),
       espnFinal: espnIsFinal || undefined,
       score: {
         ...m.score,

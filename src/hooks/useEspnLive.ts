@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ESPN_SCOREBOARD_BASE } from '../config/api';
 import { canonicalTeam } from '../config/odds';
 import { normalize } from '../config/teams';
@@ -8,6 +8,33 @@ import type { MatchResult, MatchStatus } from '../types';
 const LIVE_POLL_MS = 30 * 1000;
 const BREAKER_POLL_MS = 5 * 60 * 1000;
 const BREAKER_THRESHOLD = 3;
+
+/**
+ * ESPN が報じた試合終了 (FINISHED パッチ) の永続ストア。
+ * ライブ窓が閉じるとポーリングのパッチは消えるため、ここに残して
+ * 正準フィードが FINISHED を配るまでポイント確定を維持する。
+ */
+const FINALS_KEY = 'wc2026_espn_finals_v1';
+const FINALS_TTL_MS = 7 * 24 * 3600 * 1000;
+
+type FinalsMap = Record<string, EspnPatch & { recordedAt: string }>;
+
+function loadFinals(): FinalsMap {
+  try {
+    const raw = localStorage.getItem(FINALS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as FinalsMap;
+    // 古いエントリは掃除 (正準が追いつけば不要になる)
+    const cutoff = Date.now() - FINALS_TTL_MS;
+    const out: FinalsMap = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      if (Date.parse(v.recordedAt) > cutoff) out[k] = v;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
 
 interface RawEspnEvent {
   id?: string | number;
@@ -51,7 +78,35 @@ function ymdUTC(ms: number): string {
  */
 export function useEspnLive(matches: MatchResult[]): Record<string, EspnPatch> {
   const [patches, setPatches] = useState<Record<string, EspnPatch>>({});
+  const [finals, setFinals] = useState<FinalsMap>(loadFinals);
   const failsRef = useRef(0);
+
+  const recordFinals = useCallback((next: Record<string, EspnPatch>) => {
+    const finalEntries = Object.entries(next).filter(([, p]) => p.status === 'FINISHED');
+    if (finalEntries.length === 0) return;
+    setFinals((prev) => {
+      const merged = { ...prev };
+      let changed = false;
+      for (const [id, p] of finalEntries) {
+        const existing = merged[id];
+        if (
+          !existing ||
+          existing.home !== p.home ||
+          existing.away !== p.away
+        ) {
+          merged[id] = { ...p, recordedAt: new Date().toISOString() };
+          changed = true;
+        }
+      }
+      if (!changed) return prev;
+      try {
+        localStorage.setItem(FINALS_KEY, JSON.stringify(merged));
+      } catch {
+        /* ignore */
+      }
+      return merged;
+    });
+  }, []);
 
   const windowMatches = useMemo(() => {
     const now = Date.now();
@@ -140,6 +195,7 @@ export function useEspnLive(matches: MatchResult[]): Record<string, EspnPatch> {
         if (alive) {
           failsRef.current = 0;
           setPatches(next);
+          recordFinals(next);
         }
       } catch {
         failsRef.current += 1;
@@ -156,7 +212,20 @@ export function useEspnLive(matches: MatchResult[]): Record<string, EspnPatch> {
       alive = false;
       if (timer) clearTimeout(timer);
     };
-  }, [active, windowMatches]);
+  }, [active, windowMatches, recordFinals]);
 
-  return patches;
+  // 永続化済みの確定報を土台に、ライブ中のパッチを上に重ねて返す。
+  // 正準フィードが FINISHED を配り始めた試合の分は mergeMatch 側で自然に無視される。
+  return useMemo(() => {
+    const out: Record<string, EspnPatch> = {};
+    const canonicalFinished = new Set(
+      matches.filter((m) => m.status === 'FINISHED').map((m) => m.id),
+    );
+    for (const [id, f] of Object.entries(finals)) {
+      if (!canonicalFinished.has(id)) {
+        out[id] = { home: f.home, away: f.away, minute: null, status: 'FINISHED' };
+      }
+    }
+    return { ...out, ...patches };
+  }, [finals, patches, matches]);
 }
