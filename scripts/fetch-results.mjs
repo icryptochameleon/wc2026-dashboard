@@ -86,7 +86,8 @@ function matchId(home, away, utcDate) {
 // ───────────────────────── 取得 ─────────────────────────
 
 async function fetchJson(url, headers = {}) {
-  const res = await fetch(url, { headers });
+  // タイムアウト必須: ハングした接続 1 本がジョブ全体を 12 分タイムアウトまで道連れにするのを防ぐ
+  const res = await fetch(url, { headers, signal: AbortSignal.timeout(15_000) });
   if (!res.ok) throw new Error(`${res.status} ${url}`);
   return res.json();
 }
@@ -368,7 +369,11 @@ function pushDataBranch(envelope) {
     writeFileSync(join(work, 'results.json'), JSON.stringify(envelope, null, 1));
     run('git add results.json');
     run(`git commit -q -m "results ${envelope.meta.generatedAt}"`);
-    execSync(`git push --force "${remote}" ${DATA_BRANCH}`, { cwd: work, stdio: 'pipe' });
+    execSync(`git push --force "${remote}" ${DATA_BRANCH}`, {
+      cwd: work,
+      stdio: 'pipe',
+      timeout: 60_000,
+    });
   } finally {
     try {
       rmSync(work, { recursive: true, force: true });
