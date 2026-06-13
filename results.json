@@ -1,0 +1,1598 @@
+{
+ "meta": {
+  "generatedAt": "2026-06-13T21:09:34.143Z",
+  "sources": {
+   "footballData": "missing-token",
+   "espn": "ok"
+  },
+  "lastFullSweep": "2026-06-13T16:03:15.894Z",
+  "unmatchedEspn": [],
+  "errors": []
+ },
+ "matches": [
+  {
+   "id": "fx-mexico-south-africa-20260611",
+   "utcDate": "2026-06-11T19:00:00.000Z",
+   "status": "FINISHED",
+   "stage": "GROUP_STAGE",
+   "group": "Group A",
+   "minute": null,
+   "homeTeam": {
+    "name": "Mexico"
+   },
+   "awayTeam": {
+    "name": "South Africa"
+   },
+   "score": {
+    "fullTime": {
+     "home": 2,
+     "away": 0
+    }
+   },
+   "espnId": "760415",
+   "source": "espn"
+  },
+  {
+   "id": "fx-south-korea-czechia-20260612",
+   "utcDate": "2026-06-12T02:00:00.000Z",
+   "status": "FINISHED",
+   "stage": "GROUP_STAGE",
+   "group": "Group A",
+   "minute": null,
+   "homeTeam": {
+    "name": "South Korea"
+   },
+   "awayTeam": {
+    "name": "Czechia"
+   },
+   "score": {
+    "fullTime": {
+     "home": 2,
+     "away": 1
+    }
+   },
+   "espnId": "760414",
+   "source": "espn"
+  },
+  {
+   "id": "fx-canada-bosnia-and-herzegovina-20260612",
+   "utcDate": "2026-06-12T19:00:00.000Z",
+   "status": "FINISHED",
+   "stage": "GROUP_STAGE",
+   "group": "Group B",
+   "minute": null,
+   "homeTeam": {
+    "name": "Canada"
+   },
+   "awayTeam": {
+    "name": "Bosnia and Herzegovina"
+   },
+   "score": {
+    "fullTime": {
+     "home": 1,
+     "away": 1
+    }
+   },
+   "espnId": "760416",
+   "source": "espn"
+  },
+  {
+   "id": "fx-usa-paraguay-20260613",
+   "utcDate": "2026-06-13T01:00:00.000Z",
+   "status": "FINISHED",
+   "stage": "GROUP_STAGE",
+   "group": "Group D",
+   "minute": null,
+   "homeTeam": {
+    "name": "USA"
+   },
+   "awayTeam": {
+    "name": "Paraguay"
+   },
+   "score": {
+    "fullTime": {
+     "home": 4,
+     "away": 1
+    }
+   },
+   "espnId": "760417",
+   "source": "espn"
+  },
+  {
+   "id": "fx-qatar-switzerland-20260613",
+   "utcDate": "2026-06-13T19:00:00.000Z",
+   "status": "FINISHED",
+   "stage": "GROUP_STAGE",
+   "group": "Group B",
+   "minute": null,
+   "homeTeam": {
+    "name": "Qatar"
+   },
+   "awayTeam": {
+    "name": "Switzerland"
+   },
+   "score": {
+    "fullTime": {
+     "home": 1,
+     "away": 1
+    }
+   },
+   "espnId": "760420",
+   "source": "espn"
+  },
+  {
+   "id": "fx-brazil-morocco-20260613",
+   "utcDate": "2026-06-13T22:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group C",
+   "minute": null,
+   "homeTeam": {
+    "name": "Brazil"
+   },
+   "awayTeam": {
+    "name": "Morocco"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760419",
+   "source": "espn"
+  },
+  {
+   "id": "fx-haiti-scotland-20260614",
+   "utcDate": "2026-06-14T01:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group C",
+   "minute": null,
+   "homeTeam": {
+    "name": "Haiti"
+   },
+   "awayTeam": {
+    "name": "Scotland"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760418",
+   "source": "espn"
+  },
+  {
+   "id": "fx-australia-turkey-20260614",
+   "utcDate": "2026-06-14T04:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group D",
+   "minute": null,
+   "homeTeam": {
+    "name": "Australia"
+   },
+   "awayTeam": {
+    "name": "Turkey"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760421",
+   "source": "espn"
+  },
+  {
+   "id": "fx-germany-curacao-20260614",
+   "utcDate": "2026-06-14T17:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group E",
+   "minute": null,
+   "homeTeam": {
+    "name": "Germany"
+   },
+   "awayTeam": {
+    "name": "Curacao"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760422",
+   "source": "espn"
+  },
+  {
+   "id": "fx-netherlands-japan-20260614",
+   "utcDate": "2026-06-14T20:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group F",
+   "minute": null,
+   "homeTeam": {
+    "name": "Netherlands"
+   },
+   "awayTeam": {
+    "name": "Japan"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760425",
+   "source": "espn"
+  },
+  {
+   "id": "fx-ivory-coast-ecuador-20260614",
+   "utcDate": "2026-06-14T23:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group E",
+   "minute": null,
+   "homeTeam": {
+    "name": "Ivory Coast"
+   },
+   "awayTeam": {
+    "name": "Ecuador"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760423",
+   "source": "espn"
+  },
+  {
+   "id": "fx-sweden-tunisia-20260615",
+   "utcDate": "2026-06-15T02:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group F",
+   "minute": null,
+   "homeTeam": {
+    "name": "Sweden"
+   },
+   "awayTeam": {
+    "name": "Tunisia"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760424",
+   "source": "espn"
+  },
+  {
+   "id": "fx-spain-cape-verde-20260615",
+   "utcDate": "2026-06-15T16:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group H",
+   "minute": null,
+   "homeTeam": {
+    "name": "Spain"
+   },
+   "awayTeam": {
+    "name": "Cape Verde"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760428",
+   "source": "espn"
+  },
+  {
+   "id": "fx-belgium-egypt-20260615",
+   "utcDate": "2026-06-15T19:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group G",
+   "minute": null,
+   "homeTeam": {
+    "name": "Belgium"
+   },
+   "awayTeam": {
+    "name": "Egypt"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760426",
+   "source": "espn"
+  },
+  {
+   "id": "fx-saudi-arabia-uruguay-20260615",
+   "utcDate": "2026-06-15T22:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group H",
+   "minute": null,
+   "homeTeam": {
+    "name": "Saudi Arabia"
+   },
+   "awayTeam": {
+    "name": "Uruguay"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760429",
+   "source": "espn"
+  },
+  {
+   "id": "fx-iran-new-zealand-20260616",
+   "utcDate": "2026-06-16T01:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group G",
+   "minute": null,
+   "homeTeam": {
+    "name": "Iran"
+   },
+   "awayTeam": {
+    "name": "New Zealand"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760427",
+   "source": "espn"
+  },
+  {
+   "id": "fx-france-senegal-20260616",
+   "utcDate": "2026-06-16T19:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group I",
+   "minute": null,
+   "homeTeam": {
+    "name": "France"
+   },
+   "awayTeam": {
+    "name": "Senegal"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760432",
+   "source": "espn"
+  },
+  {
+   "id": "fx-iraq-norway-20260616",
+   "utcDate": "2026-06-16T22:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group I",
+   "minute": null,
+   "homeTeam": {
+    "name": "Iraq"
+   },
+   "awayTeam": {
+    "name": "Norway"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760430",
+   "source": "espn"
+  },
+  {
+   "id": "fx-argentina-algeria-20260617",
+   "utcDate": "2026-06-17T01:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group J",
+   "minute": null,
+   "homeTeam": {
+    "name": "Argentina"
+   },
+   "awayTeam": {
+    "name": "Algeria"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760433",
+   "source": "espn"
+  },
+  {
+   "id": "fx-austria-jordan-20260617",
+   "utcDate": "2026-06-17T04:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group J",
+   "minute": null,
+   "homeTeam": {
+    "name": "Austria"
+   },
+   "awayTeam": {
+    "name": "Jordan"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760431",
+   "source": "espn"
+  },
+  {
+   "id": "fx-portugal-dr-congo-20260617",
+   "utcDate": "2026-06-17T17:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group K",
+   "minute": null,
+   "homeTeam": {
+    "name": "Portugal"
+   },
+   "awayTeam": {
+    "name": "DR Congo"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760435",
+   "source": "espn"
+  },
+  {
+   "id": "fx-england-croatia-20260617",
+   "utcDate": "2026-06-17T20:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group L",
+   "minute": null,
+   "homeTeam": {
+    "name": "England"
+   },
+   "awayTeam": {
+    "name": "Croatia"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760437",
+   "source": "espn"
+  },
+  {
+   "id": "fx-ghana-panama-20260617",
+   "utcDate": "2026-06-17T23:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group L",
+   "minute": null,
+   "homeTeam": {
+    "name": "Ghana"
+   },
+   "awayTeam": {
+    "name": "Panama"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760434",
+   "source": "espn"
+  },
+  {
+   "id": "fx-uzbekistan-colombia-20260618",
+   "utcDate": "2026-06-18T02:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group K",
+   "minute": null,
+   "homeTeam": {
+    "name": "Uzbekistan"
+   },
+   "awayTeam": {
+    "name": "Colombia"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760436",
+   "source": "espn"
+  },
+  {
+   "id": "fx-czechia-south-africa-20260618",
+   "utcDate": "2026-06-18T16:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group A",
+   "minute": null,
+   "homeTeam": {
+    "name": "Czechia"
+   },
+   "awayTeam": {
+    "name": "South Africa"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760438",
+   "source": "espn"
+  },
+  {
+   "id": "fx-switzerland-bosnia-and-herzegovina-20260618",
+   "utcDate": "2026-06-18T19:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group B",
+   "minute": null,
+   "homeTeam": {
+    "name": "Switzerland"
+   },
+   "awayTeam": {
+    "name": "Bosnia and Herzegovina"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760439",
+   "source": "espn"
+  },
+  {
+   "id": "fx-canada-qatar-20260618",
+   "utcDate": "2026-06-18T22:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group B",
+   "minute": null,
+   "homeTeam": {
+    "name": "Canada"
+   },
+   "awayTeam": {
+    "name": "Qatar"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760440",
+   "source": "espn"
+  },
+  {
+   "id": "fx-mexico-south-korea-20260619",
+   "utcDate": "2026-06-19T01:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group A",
+   "minute": null,
+   "homeTeam": {
+    "name": "Mexico"
+   },
+   "awayTeam": {
+    "name": "South Korea"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760441",
+   "source": "espn"
+  },
+  {
+   "id": "fx-usa-australia-20260619",
+   "utcDate": "2026-06-19T19:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group D",
+   "minute": null,
+   "homeTeam": {
+    "name": "USA"
+   },
+   "awayTeam": {
+    "name": "Australia"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760442",
+   "source": "espn"
+  },
+  {
+   "id": "fx-scotland-morocco-20260619",
+   "utcDate": "2026-06-19T22:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group C",
+   "minute": null,
+   "homeTeam": {
+    "name": "Scotland"
+   },
+   "awayTeam": {
+    "name": "Morocco"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760445",
+   "source": "espn"
+  },
+  {
+   "id": "fx-brazil-haiti-20260620",
+   "utcDate": "2026-06-20T00:30:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group C",
+   "minute": null,
+   "homeTeam": {
+    "name": "Brazil"
+   },
+   "awayTeam": {
+    "name": "Haiti"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760444",
+   "source": "espn"
+  },
+  {
+   "id": "fx-turkey-paraguay-20260620",
+   "utcDate": "2026-06-20T03:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group D",
+   "minute": null,
+   "homeTeam": {
+    "name": "Turkey"
+   },
+   "awayTeam": {
+    "name": "Paraguay"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760443",
+   "source": "espn"
+  },
+  {
+   "id": "fx-netherlands-sweden-20260620",
+   "utcDate": "2026-06-20T17:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group F",
+   "minute": null,
+   "homeTeam": {
+    "name": "Netherlands"
+   },
+   "awayTeam": {
+    "name": "Sweden"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760447",
+   "source": "espn"
+  },
+  {
+   "id": "fx-germany-ivory-coast-20260620",
+   "utcDate": "2026-06-20T20:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group E",
+   "minute": null,
+   "homeTeam": {
+    "name": "Germany"
+   },
+   "awayTeam": {
+    "name": "Ivory Coast"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760448",
+   "source": "espn"
+  },
+  {
+   "id": "fx-ecuador-curacao-20260621",
+   "utcDate": "2026-06-21T00:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group E",
+   "minute": null,
+   "homeTeam": {
+    "name": "Ecuador"
+   },
+   "awayTeam": {
+    "name": "Curacao"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760446",
+   "source": "espn"
+  },
+  {
+   "id": "fx-tunisia-japan-20260621",
+   "utcDate": "2026-06-21T04:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group F",
+   "minute": null,
+   "homeTeam": {
+    "name": "Tunisia"
+   },
+   "awayTeam": {
+    "name": "Japan"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760449",
+   "source": "espn"
+  },
+  {
+   "id": "fx-spain-saudi-arabia-20260621",
+   "utcDate": "2026-06-21T16:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group H",
+   "minute": null,
+   "homeTeam": {
+    "name": "Spain"
+   },
+   "awayTeam": {
+    "name": "Saudi Arabia"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760453",
+   "source": "espn"
+  },
+  {
+   "id": "fx-belgium-iran-20260621",
+   "utcDate": "2026-06-21T19:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group G",
+   "minute": null,
+   "homeTeam": {
+    "name": "Belgium"
+   },
+   "awayTeam": {
+    "name": "Iran"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760451",
+   "source": "espn"
+  },
+  {
+   "id": "fx-uruguay-cape-verde-20260621",
+   "utcDate": "2026-06-21T22:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group H",
+   "minute": null,
+   "homeTeam": {
+    "name": "Uruguay"
+   },
+   "awayTeam": {
+    "name": "Cape Verde"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760450",
+   "source": "espn"
+  },
+  {
+   "id": "fx-new-zealand-egypt-20260622",
+   "utcDate": "2026-06-22T01:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group G",
+   "minute": null,
+   "homeTeam": {
+    "name": "New Zealand"
+   },
+   "awayTeam": {
+    "name": "Egypt"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760452",
+   "source": "espn"
+  },
+  {
+   "id": "fx-argentina-austria-20260622",
+   "utcDate": "2026-06-22T17:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group J",
+   "minute": null,
+   "homeTeam": {
+    "name": "Argentina"
+   },
+   "awayTeam": {
+    "name": "Austria"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760456",
+   "source": "espn"
+  },
+  {
+   "id": "fx-france-iraq-20260622",
+   "utcDate": "2026-06-22T21:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group I",
+   "minute": null,
+   "homeTeam": {
+    "name": "France"
+   },
+   "awayTeam": {
+    "name": "Iraq"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760457",
+   "source": "espn"
+  },
+  {
+   "id": "fx-norway-senegal-20260623",
+   "utcDate": "2026-06-23T00:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group I",
+   "minute": null,
+   "homeTeam": {
+    "name": "Norway"
+   },
+   "awayTeam": {
+    "name": "Senegal"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760454",
+   "source": "espn"
+  },
+  {
+   "id": "fx-jordan-algeria-20260623",
+   "utcDate": "2026-06-23T03:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group J",
+   "minute": null,
+   "homeTeam": {
+    "name": "Jordan"
+   },
+   "awayTeam": {
+    "name": "Algeria"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760455",
+   "source": "espn"
+  },
+  {
+   "id": "fx-portugal-uzbekistan-20260623",
+   "utcDate": "2026-06-23T17:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group K",
+   "minute": null,
+   "homeTeam": {
+    "name": "Portugal"
+   },
+   "awayTeam": {
+    "name": "Uzbekistan"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760461",
+   "source": "espn"
+  },
+  {
+   "id": "fx-england-ghana-20260623",
+   "utcDate": "2026-06-23T20:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group L",
+   "minute": null,
+   "homeTeam": {
+    "name": "England"
+   },
+   "awayTeam": {
+    "name": "Ghana"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760458",
+   "source": "espn"
+  },
+  {
+   "id": "fx-panama-croatia-20260623",
+   "utcDate": "2026-06-23T23:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group L",
+   "minute": null,
+   "homeTeam": {
+    "name": "Panama"
+   },
+   "awayTeam": {
+    "name": "Croatia"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760460",
+   "source": "espn"
+  },
+  {
+   "id": "fx-colombia-dr-congo-20260624",
+   "utcDate": "2026-06-24T02:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group K",
+   "minute": null,
+   "homeTeam": {
+    "name": "Colombia"
+   },
+   "awayTeam": {
+    "name": "DR Congo"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760459",
+   "source": "espn"
+  },
+  {
+   "id": "fx-bosnia-and-herzegovina-qatar-20260624",
+   "utcDate": "2026-06-24T19:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group B",
+   "minute": null,
+   "homeTeam": {
+    "name": "Bosnia and Herzegovina"
+   },
+   "awayTeam": {
+    "name": "Qatar"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760462",
+   "source": "espn"
+  },
+  {
+   "id": "fx-switzerland-canada-20260624",
+   "utcDate": "2026-06-24T19:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group B",
+   "minute": null,
+   "homeTeam": {
+    "name": "Switzerland"
+   },
+   "awayTeam": {
+    "name": "Canada"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760463",
+   "source": "espn"
+  },
+  {
+   "id": "fx-morocco-haiti-20260624",
+   "utcDate": "2026-06-24T22:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group C",
+   "minute": null,
+   "homeTeam": {
+    "name": "Morocco"
+   },
+   "awayTeam": {
+    "name": "Haiti"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760464",
+   "source": "espn"
+  },
+  {
+   "id": "fx-scotland-brazil-20260624",
+   "utcDate": "2026-06-24T22:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group C",
+   "minute": null,
+   "homeTeam": {
+    "name": "Scotland"
+   },
+   "awayTeam": {
+    "name": "Brazil"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760465",
+   "source": "espn"
+  },
+  {
+   "id": "fx-czechia-mexico-20260625",
+   "utcDate": "2026-06-25T01:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group A",
+   "minute": null,
+   "homeTeam": {
+    "name": "Czechia"
+   },
+   "awayTeam": {
+    "name": "Mexico"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760467",
+   "source": "espn"
+  },
+  {
+   "id": "fx-south-africa-south-korea-20260625",
+   "utcDate": "2026-06-25T01:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group A",
+   "minute": null,
+   "homeTeam": {
+    "name": "South Africa"
+   },
+   "awayTeam": {
+    "name": "South Korea"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760466",
+   "source": "espn"
+  },
+  {
+   "id": "fx-curacao-ivory-coast-20260625",
+   "utcDate": "2026-06-25T20:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group E",
+   "minute": null,
+   "homeTeam": {
+    "name": "Curacao"
+   },
+   "awayTeam": {
+    "name": "Ivory Coast"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760473",
+   "source": "espn"
+  },
+  {
+   "id": "fx-ecuador-germany-20260625",
+   "utcDate": "2026-06-25T20:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group E",
+   "minute": null,
+   "homeTeam": {
+    "name": "Ecuador"
+   },
+   "awayTeam": {
+    "name": "Germany"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760468",
+   "source": "espn"
+  },
+  {
+   "id": "fx-japan-sweden-20260625",
+   "utcDate": "2026-06-25T23:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group F",
+   "minute": null,
+   "homeTeam": {
+    "name": "Japan"
+   },
+   "awayTeam": {
+    "name": "Sweden"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760471",
+   "source": "espn"
+  },
+  {
+   "id": "fx-tunisia-netherlands-20260625",
+   "utcDate": "2026-06-25T23:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group F",
+   "minute": null,
+   "homeTeam": {
+    "name": "Tunisia"
+   },
+   "awayTeam": {
+    "name": "Netherlands"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760472",
+   "source": "espn"
+  },
+  {
+   "id": "fx-paraguay-australia-20260626",
+   "utcDate": "2026-06-26T02:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group D",
+   "minute": null,
+   "homeTeam": {
+    "name": "Paraguay"
+   },
+   "awayTeam": {
+    "name": "Australia"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760469",
+   "source": "espn"
+  },
+  {
+   "id": "fx-turkey-usa-20260626",
+   "utcDate": "2026-06-26T02:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group D",
+   "minute": null,
+   "homeTeam": {
+    "name": "Turkey"
+   },
+   "awayTeam": {
+    "name": "USA"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760470",
+   "source": "espn"
+  },
+  {
+   "id": "fx-norway-france-20260626",
+   "utcDate": "2026-06-26T19:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group I",
+   "minute": null,
+   "homeTeam": {
+    "name": "Norway"
+   },
+   "awayTeam": {
+    "name": "France"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760475",
+   "source": "espn"
+  },
+  {
+   "id": "fx-senegal-iraq-20260626",
+   "utcDate": "2026-06-26T19:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group I",
+   "minute": null,
+   "homeTeam": {
+    "name": "Senegal"
+   },
+   "awayTeam": {
+    "name": "Iraq"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760474",
+   "source": "espn"
+  },
+  {
+   "id": "fx-cape-verde-saudi-arabia-20260627",
+   "utcDate": "2026-06-27T00:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group H",
+   "minute": null,
+   "homeTeam": {
+    "name": "Cape Verde"
+   },
+   "awayTeam": {
+    "name": "Saudi Arabia"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760478",
+   "source": "espn"
+  },
+  {
+   "id": "fx-uruguay-spain-20260627",
+   "utcDate": "2026-06-27T00:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group H",
+   "minute": null,
+   "homeTeam": {
+    "name": "Uruguay"
+   },
+   "awayTeam": {
+    "name": "Spain"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760479",
+   "source": "espn"
+  },
+  {
+   "id": "fx-egypt-iran-20260627",
+   "utcDate": "2026-06-27T03:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group G",
+   "minute": null,
+   "homeTeam": {
+    "name": "Egypt"
+   },
+   "awayTeam": {
+    "name": "Iran"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760476",
+   "source": "espn"
+  },
+  {
+   "id": "fx-new-zealand-belgium-20260627",
+   "utcDate": "2026-06-27T03:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group G",
+   "minute": null,
+   "homeTeam": {
+    "name": "New Zealand"
+   },
+   "awayTeam": {
+    "name": "Belgium"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760477",
+   "source": "espn"
+  },
+  {
+   "id": "fx-croatia-ghana-20260627",
+   "utcDate": "2026-06-27T21:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group L",
+   "minute": null,
+   "homeTeam": {
+    "name": "Croatia"
+   },
+   "awayTeam": {
+    "name": "Ghana"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760480",
+   "source": "espn"
+  },
+  {
+   "id": "fx-panama-england-20260627",
+   "utcDate": "2026-06-27T21:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group L",
+   "minute": null,
+   "homeTeam": {
+    "name": "Panama"
+   },
+   "awayTeam": {
+    "name": "England"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760485",
+   "source": "espn"
+  },
+  {
+   "id": "fx-colombia-portugal-20260627",
+   "utcDate": "2026-06-27T23:30:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group K",
+   "minute": null,
+   "homeTeam": {
+    "name": "Colombia"
+   },
+   "awayTeam": {
+    "name": "Portugal"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760481",
+   "source": "espn"
+  },
+  {
+   "id": "fx-dr-congo-uzbekistan-20260627",
+   "utcDate": "2026-06-27T23:30:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group K",
+   "minute": null,
+   "homeTeam": {
+    "name": "DR Congo"
+   },
+   "awayTeam": {
+    "name": "Uzbekistan"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760482",
+   "source": "espn"
+  },
+  {
+   "id": "fx-algeria-austria-20260628",
+   "utcDate": "2026-06-28T02:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group J",
+   "minute": null,
+   "homeTeam": {
+    "name": "Algeria"
+   },
+   "awayTeam": {
+    "name": "Austria"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760484",
+   "source": "espn"
+  },
+  {
+   "id": "fx-jordan-argentina-20260628",
+   "utcDate": "2026-06-28T02:00:00.000Z",
+   "status": "TIMED",
+   "stage": "GROUP_STAGE",
+   "group": "Group J",
+   "minute": null,
+   "homeTeam": {
+    "name": "Jordan"
+   },
+   "awayTeam": {
+    "name": "Argentina"
+   },
+   "score": {
+    "fullTime": {
+     "home": null,
+     "away": null
+    }
+   },
+   "espnId": "760483",
+   "source": "espn"
+  }
+ ]
+}
