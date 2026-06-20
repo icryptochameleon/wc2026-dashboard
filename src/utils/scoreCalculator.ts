@@ -280,6 +280,90 @@ export function calculateGroupStandings(
   );
 }
 
+/**
+ * グループ内で「2位以内 (Best32 自動突破) を数学的に確定」したチームを返す。
+ *
+ * 残り全試合 (未終了 = SCHEDULED/TIMED/IN_PLAY/...) の勝/分/負を総当たりで列挙し、
+ * どの結果になっても X より勝点が同点以上のチームが 1 つ以下なら、X は最悪でも 2 位。
+ * 直接対戦 (例: 3位4位候補同士が潰し合う) も列挙に含まれるため正しく確定できる。
+ * 得点差は仮想試合では不定なので「同点以上 = 上位になり得る」と安全側に数える。
+ */
+export function computeClinchedTop2(
+  matches: MatchResult[],
+  teams: string[],
+): Set<string> {
+  const base: Record<string, number> = {};
+  const played: Record<string, number> = {};
+  for (const t of teams) {
+    base[t] = 0;
+    played[t] = 0;
+  }
+  const inGroup = new Map(teams.map((t) => [normalize(t), t]));
+
+  const remaining: Array<[string, string]> = [];
+  for (const m of matches) {
+    if (m.stage !== 'GROUP_STAGE') continue;
+    const home = inGroup.get(normalize(m.homeTeam.name));
+    const away = inGroup.get(normalize(m.awayTeam.name));
+    if (!home || !away) continue;
+    if (isFinished(m) && m.score.fullTime.home !== null && m.score.fullTime.away !== null) {
+      const hg = m.score.fullTime.home;
+      const ag = m.score.fullTime.away;
+      played[home]++;
+      played[away]++;
+      if (hg > ag) base[home] += 3;
+      else if (hg < ag) base[away] += 3;
+      else {
+        base[home]++;
+        base[away]++;
+      }
+    } else {
+      remaining.push([home, away]);
+    }
+  }
+
+  const clinched = new Set<string>();
+  const total = 3 ** remaining.length;
+  for (const x of teams) {
+    if (played[x] === 0) continue; // 未消化チームは確定し得ない
+    let safe = true;
+    for (let combo = 0; combo < total && safe; combo++) {
+      const pts = { ...base };
+      let c = combo;
+      for (const [h, a] of remaining) {
+        const o = c % 3;
+        c = (c - o) / 3;
+        if (o === 0) pts[h] += 3;
+        else if (o === 1) pts[a] += 3;
+        else {
+          pts[h]++;
+          pts[a]++;
+        }
+      }
+      let atOrAbove = 0;
+      for (const y of teams) {
+        if (y !== x && pts[y] >= pts[x]) atOrAbove++;
+      }
+      if (atOrAbove > 1) safe = false; // 2 チーム以上に抜かれ得る → 未確定
+    }
+    if (safe) clinched.add(x);
+  }
+  return clinched;
+}
+
+/** 指定グループの全試合を日時順で返す (順位表の展開表示用) */
+export function getGroupMatches(matches: MatchResult[], teams: string[]): MatchResult[] {
+  const set = new Set(teams.map(normalize));
+  return matches
+    .filter(
+      (m) =>
+        m.stage === 'GROUP_STAGE' &&
+        set.has(normalize(m.homeTeam.name)) &&
+        set.has(normalize(m.awayTeam.name)),
+    )
+    .sort((a, b) => new Date(a.utcDate).getTime() - new Date(b.utcDate).getTime());
+}
+
 export function getRecentResults(matches: MatchResult[], limit = 10): MatchResult[] {
   return matches
     .filter((m) => m.status === 'FINISHED')

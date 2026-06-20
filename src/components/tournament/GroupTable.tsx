@@ -1,14 +1,20 @@
 import { useGame } from '../../context/GameContext';
 import { GROUPS, getPlayerOfTeam, PLAYERS } from '../../config/teams';
-import { calculateGroupStandings } from '../../utils/scoreCalculator';
+import {
+  calculateGroupStandings,
+  computeClinchedTop2,
+  getGroupMatches,
+} from '../../utils/scoreCalculator';
 import { getFlag, getTeamNameJa } from '../../utils/teamUtils';
-import { useMemo } from 'react';
+import { formatJSTDateLabel, formatJSTTime } from '../../utils/dateUtils';
+import { useMemo, useState } from 'react';
 
 interface Props {
   letter: string;
 }
 
-function rowBg(rank: number): string {
+function rowBg(rank: number, clinched: boolean): string {
+  if (clinched) return 'bg-green-500/25';
   if (rank <= 2) return 'bg-green-500/10';
   if (rank === 3) return 'bg-amber-500/10';
   return 'bg-slate-500/5';
@@ -17,18 +23,31 @@ function rowBg(rank: number): string {
 export function GroupTable({ letter }: Props) {
   const { matches } = useGame();
   const teams = GROUPS[letter];
+  const [open, setOpen] = useState(false);
+
   const standings = useMemo(() => calculateGroupStandings(matches, teams), [matches, teams]);
+  const clinched = useMemo(() => computeClinchedTop2(matches, teams), [matches, teams]);
+  const groupMatches = useMemo(() => getGroupMatches(matches, teams), [matches, teams]);
+  const playedCount = groupMatches.filter((m) => m.status === 'FINISHED').length;
 
   return (
     <div className="card">
-      <header className="card-header">
-        <h3 className="font-heading text-base">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="card-header w-full text-left hover:bg-white/5 transition-colors"
+        aria-expanded={open}
+      >
+        <h3 className="font-heading text-base flex items-center gap-1.5">
+          <span className={`text-slate-500 text-xs transition-transform ${open ? 'rotate-90' : ''}`}>
+            ▶
+          </span>
           Group {letter}
         </h3>
         <span className="text-[10px] text-slate-400">
-          上位2位 自動突破 · 3位はワイルドカード
+          {open ? '閉じる' : `試合結果 (${playedCount}/${groupMatches.length})`}
         </span>
-      </header>
+      </button>
       <div className="overflow-x-auto">
         <table className="w-full text-xs sm:text-sm">
           <thead className="text-[10px] text-slate-500 bg-navy-900/40">
@@ -50,8 +69,9 @@ export function GroupTable({ letter }: Props) {
               const rank = i + 1;
               const pid = getPlayerOfTeam(s.team);
               const color = pid ? PLAYERS[pid].color : '#666';
+              const isClinched = clinched.has(s.team);
               return (
-                <tr key={s.team} className={`border-t border-white/5 ${rowBg(rank)}`}>
+                <tr key={s.team} className={`border-t border-white/5 ${rowBg(rank, isClinched)}`}>
                   <td className="px-2 py-1.5 font-mono text-slate-400">{rank}</td>
                   <td className="px-1 py-1.5">
                     <div className="flex items-center gap-1.5 min-w-0">
@@ -63,6 +83,14 @@ export function GroupTable({ letter }: Props) {
                       <span className="truncate">
                         {getFlag(s.team)} {getTeamNameJa(s.team)}
                       </span>
+                      {isClinched && (
+                        <span
+                          className="shrink-0 text-[9px] px-1 py-0.5 rounded-full bg-green-500/30 text-green-300 border border-green-400/40 font-bold"
+                          title="2位以内が数学的に確定 (Best32 自動突破)"
+                        >
+                          突破
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-1 py-1.5 text-right tabular-nums">{s.played}</td>
@@ -79,6 +107,41 @@ export function GroupTable({ letter }: Props) {
           </tbody>
         </table>
       </div>
+
+      {open && (
+        <div className="border-t border-white/5 divide-y divide-white/5">
+          {groupMatches.map((m) => {
+            const done = m.status === 'FINISHED';
+            const live = ['IN_PLAY', 'LIVE', 'PAUSED'].includes(m.status);
+            const hg = m.score.fullTime.home;
+            const ag = m.score.fullTime.away;
+            const homeWin = done && hg != null && ag != null && hg > ag;
+            const awayWin = done && hg != null && ag != null && ag > hg;
+            return (
+              <div key={m.id} className="px-3 py-2 text-xs">
+                <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
+                  <span>
+                    {formatJSTDateLabel(m.utcDate)} {formatJSTTime(m.utcDate)}
+                  </span>
+                  {live && <span className="text-red-400 font-bold">🔴 LIVE</span>}
+                  {!done && !live && <span className="text-slate-500">予定</span>}
+                </div>
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <span className={`text-right truncate ${homeWin ? 'font-bold text-white' : 'text-slate-300'}`}>
+                    {getFlag(m.homeTeam.name)} {getTeamNameJa(m.homeTeam.name)}
+                  </span>
+                  <span className="font-heading tabular-nums px-1.5">
+                    {done || live ? `${hg ?? 0} - ${ag ?? 0}` : 'vs'}
+                  </span>
+                  <span className={`text-left truncate ${awayWin ? 'font-bold text-white' : 'text-slate-300'}`}>
+                    {getTeamNameJa(m.awayTeam.name)} {getFlag(m.awayTeam.name)}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
