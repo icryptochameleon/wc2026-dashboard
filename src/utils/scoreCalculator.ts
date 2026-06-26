@@ -148,43 +148,37 @@ export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
         const won = fin && wonMatch(team, terminal);
         const lost = fin && lostMatch(team, terminal);
 
+        // ルール: ポイントが LOCKED されるのは「次の試合が無くなった時」だけ。
+        //   - R32/R16/QF で敗北 = そこで終わり → 加点
+        //   - 準決勝は勝敗どちらも次がある (決勝 / 3位決定戦) → 未確定 (0)
+        //   - 3位決定戦・決勝で決着 = 終着 → 加点 (3位/4位/準優勝/優勝)
+        //   - 勝ち上がり中・試合前 → 未確定 (0)。securedPoints は表示専用の最低保証。
         switch (tStage) {
           case 'FINAL':
             if (!fin) {
-              securedPoints = SCORING.RUNNER_UP; // 決勝進出 = 最低準優勝が保証
-              knockoutAward = { label: '🏟 決勝進出 (確定: ベスト4分 50k)', points: SCORING.SEMI_FINAL, type: 'SEMI_FINAL' };
+              securedPoints = SCORING.RUNNER_UP; // 決勝待ち = 最低準優勝が保証 (LOCKED は 0)
             } else if (won) {
               finalResult = 'CHAMPION';
-              securedPoints = SCORING.CHAMPION;
               knockoutAward = { label: '🏆 優勝', points: SCORING.CHAMPION, type: 'CHAMPION' };
             } else {
               finalResult = 'RUNNER_UP';
-              securedPoints = SCORING.RUNNER_UP;
               knockoutAward = { label: '🥈 準優勝', points: SCORING.RUNNER_UP, type: 'RUNNER_UP' };
             }
             break;
           case 'THIRD_PLACE':
             if (!fin) {
-              securedPoints = SCORING.THIRD_PLACE;
-              knockoutAward = { label: '🥉 3位決定戦へ (確定: 4位 50k)', points: SCORING.SEMI_FINAL, type: 'SEMI_FINAL' };
+              securedPoints = SCORING.SEMI_FINAL; // 3位決定戦待ち = 最低 4位 50k (LOCKED は 0)
             } else if (won) {
               finalResult = 'THIRD_PLACE';
-              securedPoints = SCORING.THIRD_PLACE;
               knockoutAward = { label: '🥉 3位', points: SCORING.THIRD_PLACE, type: 'THIRD_PLACE' };
             } else {
-              securedPoints = SCORING.SEMI_FINAL;
               knockoutAward = { label: '4位 (3位決定戦で敗退)', points: SCORING.SEMI_FINAL, type: 'SEMI_FINAL' };
             }
             break;
           case 'SEMI_FINALS':
-            // 準決勝に出た時点で最低 4 位 (50k) が確定。敗者は 3 位決定戦へ (敗退ではない)。
-            securedPoints = won ? SCORING.RUNNER_UP : SCORING.THIRD_PLACE;
-            inThirdPlaceMatch = lost;
-            knockoutAward = {
-              label: lost ? 'ベスト4 (3位決定戦へ・確定50k)' : 'ベスト4以上確定 (50k)',
-              points: SCORING.SEMI_FINAL,
-              type: 'SEMI_FINAL',
-            };
+            // 勝てば決勝、負ければ 3位決定戦 — どちらも次の試合があるので未確定 (LOCKED 0)。
+            securedPoints = won ? SCORING.RUNNER_UP : SCORING.SEMI_FINAL;
+            inThirdPlaceMatch = lost; // 敗者は 3位決定戦へ (敗退表示にしない)
             break;
           case 'QUARTER_FINALS':
             if (lost) {
