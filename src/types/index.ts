@@ -40,6 +40,10 @@ export interface MatchResult {
   score: {
     fullTime: { home: number | null; away: number | null };
     halfTime?: { home: number | null; away: number | null };
+    /** 勝者 (ノックアウトの PK 決着を含む解決用)。引分は 'DRAW'、未確定は null/未設定。 */
+    winner?: 'HOME' | 'AWAY' | 'DRAW' | null;
+    /** PK スコア (あれば) */
+    penalties?: { home: number; away: number };
   };
   scorers?: { player: string; minute: number; team: string }[];
   /** football-data.org の数値 id (参考) */
@@ -85,7 +89,10 @@ export interface TeamStanding {
 
 export interface TeamScore {
   team: string;
+  /** 確定済み (LOCKED) ポイント = 予選 + 敗退/順位確定で入った排他 KO ポイント。合計に算入。 */
   points: number;
+  /** 表示専用の「最低保証」ポイント (生き残り中チームが現時点で確保済みの floor)。合計には算入しない。 */
+  securedPoints: number;
   wins: number;
   draws: number;
   losses: number;
@@ -94,6 +101,8 @@ export interface TeamScore {
   currentStage: MatchStage;
   furthestStage: MatchStage;
   eliminated: boolean;
+  /** 準決勝で敗れ 3 位決定戦に回る状態 (敗退ではない) */
+  inThirdPlaceMatch?: boolean;
   finalResult?: 'CHAMPION' | 'RUNNER_UP' | 'THIRD_PLACE' | null;
   breakdown: ScoreBreakdown[];
 }

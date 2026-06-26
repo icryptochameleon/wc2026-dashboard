@@ -19,6 +19,8 @@ function statusBadge(score: TeamScore): { icon: string; label: string; cls: stri
     return { icon: '🥈', label: '準優勝', cls: 'bg-slate-300/20 text-slate-300 border-slate-300/30' };
   if (score.finalResult === 'THIRD_PLACE')
     return { icon: '🥉', label: '3位', cls: 'bg-amber-600/20 text-amber-500 border-amber-600/30' };
+  if (score.inThirdPlaceMatch)
+    return { icon: '🥉', label: '3位決定戦へ', cls: 'bg-amber-500/15 text-amber-300 border-amber-500/30' };
   if (score.eliminated)
     return { icon: '❌', label: '敗退', cls: 'bg-red-500/15 text-red-400 border-red-500/30' };
   return { icon: '🟢', label: '進行中', cls: 'bg-green-500/15 text-green-400 border-green-500/30' };
@@ -77,6 +79,14 @@ export function TeamCard({ score, color }: { score: TeamScore; color: string }) 
             {NF.format(score.points)}
           </span>
         </div>
+        {!score.eliminated && score.securedPoints > score.points && (
+          <div className="flex items-center justify-between -mt-2">
+            <span className="text-[10px] text-slate-500">最低保証 (確保済み)</span>
+            <span className="text-[11px] tabular-nums text-slate-400">
+              {NF.format(score.securedPoints)}
+            </span>
+          </div>
+        )}
 
         {score.breakdown.length > 0 && (
           <details className="text-xs text-slate-400">

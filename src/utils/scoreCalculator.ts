@@ -1,4 +1,4 @@
-import { PLAYERS, PLAYER_IDS, getPlayerOfTeam, normalize } from '../config/teams';
+import { PLAYERS, PLAYER_IDS, getGroupOfTeam, getPlayerOfTeam, normalize } from '../config/teams';
 import { SCORING, stageRank } from '../config/scoring';
 import type {
   MatchResult,
@@ -14,11 +14,45 @@ function isFinished(m: MatchResult): boolean {
   return m.status === 'FINISHED';
 }
 
+/** 両チームが同一の設定グループに属する本物の予選試合か (越境誤分類を弾く) */
+function isRealGroupMatch(m: MatchResult): boolean {
+  const hg = getGroupOfTeam(m.homeTeam.name);
+  const ag = getGroupOfTeam(m.awayTeam.name);
+  return hg !== null && hg === ag;
+}
+
 function teamInMatch(team: string, m: MatchResult): 'home' | 'away' | null {
   const t = normalize(team);
   if (normalize(m.homeTeam.name) === t) return 'home';
   if (normalize(m.awayTeam.name) === t) return 'away';
   return null;
+}
+
+/**
+ * チームがその試合に勝ったか。score.winner (PK 決着を含む) を最優先し、
+ * 無い場合のみ fullTime のスコア差で判定する (予選の引分はここでは false)。
+ */
+function wonMatch(team: string, m: MatchResult): boolean {
+  const side = teamInMatch(team, m);
+  if (!side) return false;
+  if (m.score.winner === 'HOME') return side === 'home';
+  if (m.score.winner === 'AWAY') return side === 'away';
+  if (m.score.winner === 'DRAW') return false;
+  const tg = (side === 'home' ? m.score.fullTime.home : m.score.fullTime.away) ?? 0;
+  const og = (side === 'home' ? m.score.fullTime.away : m.score.fullTime.home) ?? 0;
+  return tg > og;
+}
+
+/** チームがその試合に負けたか (PK 敗退を含む)。 */
+function lostMatch(team: string, m: MatchResult): boolean {
+  const side = teamInMatch(team, m);
+  if (!side) return false;
+  if (m.score.winner === 'HOME') return side === 'away';
+  if (m.score.winner === 'AWAY') return side === 'home';
+  if (m.score.winner === 'DRAW') return false;
+  const tg = (side === 'home' ? m.score.fullTime.home : m.score.fullTime.away) ?? 0;
+  const og = (side === 'home' ? m.score.fullTime.away : m.score.fullTime.home) ?? 0;
+  return tg < og;
 }
 
 export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
@@ -42,11 +76,14 @@ export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
       let finalResult: TeamScore['finalResult'] = null;
 
       // ───────── 予選リーグ (1試合ごと加算: 勝 +3000 / 分 0 / 負 -3000) ─────────
+      // 防御: ステージ誤分類 (例: R32 が GROUP_STAGE に化ける) で越境対戦が予選に
+      // 混入しても汚染しないよう、同一設定グループ同士の試合のみ採用する。
       const groupMatches = matches.filter(
         (m) =>
           m.stage === 'GROUP_STAGE' &&
           isFinished(m) &&
-          teamInMatch(team, m) !== null,
+          teamInMatch(team, m) !== null &&
+          isRealGroupMatch(m),
       );
       for (const m of groupMatches) {
         const side = teamInMatch(team, m)!;
@@ -77,8 +114,11 @@ export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
         }
       }
 
-      // ───────── トーナメント (排他式: 最終到達ステージのポイントのみ) ─────────
-      // チームが出場したノックアウトステージを最も奥のものから判定する。
+      // ───────── トーナメント (排他式・敗退/順位確定時に付与) ─────────
+      // LOCKED = 敗退や順位が確定して初めて入る排他ポイント (合計に算入)。
+      // SECURED = 生き残り中チームが現時点で確保済みの最低保証 (表示専用・合計外)。
+      // チームの「終着試合」= 出場した最も奥の KO 試合。勝てば必ず次ステージの試合が
+      // 生成されるので、各チームは自分の終着試合に着地する。付与は出場ではなく勝敗で分岐。
       const stagesByRank: MatchStage[] = [
         'FINAL',
         'THIRD_PLACE',
@@ -88,54 +128,86 @@ export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
         'LAST_32',
       ];
       let knockoutAward: { label: string; points: number; type: ScoreBreakdown['type'] } | null = null;
+      let securedPoints = 0;
+      let inThirdPlaceMatch = false;
 
+      let terminal: MatchResult | null = null;
+      let tStage: MatchStage | null = null;
       for (const stage of stagesByRank) {
         const m = matches.find((x) => x.stage === stage && teamInMatch(team, x) !== null);
-        if (!m) continue;
-        furthestStage = stage;
+        if (m) {
+          terminal = m;
+          tStage = stage;
+          break;
+        }
+      }
 
-        if (stage === 'FINAL') {
-          if (isFinished(m)) {
-            const side = teamInMatch(team, m)!;
-            const tg = (side === 'home' ? m.score.fullTime.home : m.score.fullTime.away) ?? 0;
-            const og = (side === 'home' ? m.score.fullTime.away : m.score.fullTime.home) ?? 0;
-            if (tg > og) {
+      if (terminal && tStage) {
+        furthestStage = tStage;
+        const fin = isFinished(terminal);
+        const won = fin && wonMatch(team, terminal);
+        const lost = fin && lostMatch(team, terminal);
+
+        switch (tStage) {
+          case 'FINAL':
+            if (!fin) {
+              securedPoints = SCORING.RUNNER_UP; // 決勝進出 = 最低準優勝が保証
+              knockoutAward = { label: '🏟 決勝進出 (確定: ベスト4分 50k)', points: SCORING.SEMI_FINAL, type: 'SEMI_FINAL' };
+            } else if (won) {
               finalResult = 'CHAMPION';
+              securedPoints = SCORING.CHAMPION;
               knockoutAward = { label: '🏆 優勝', points: SCORING.CHAMPION, type: 'CHAMPION' };
             } else {
               finalResult = 'RUNNER_UP';
+              securedPoints = SCORING.RUNNER_UP;
               knockoutAward = { label: '🥈 準優勝', points: SCORING.RUNNER_UP, type: 'RUNNER_UP' };
             }
-          } else {
-            // 決勝進出済み・未終了 → 最低でも準優勝確定
-            knockoutAward = { label: '🏟 決勝進出 (暫定: 準優勝扱い)', points: SCORING.RUNNER_UP, type: 'RUNNER_UP' };
-          }
-        } else if (stage === 'THIRD_PLACE') {
-          if (isFinished(m)) {
-            const side = teamInMatch(team, m)!;
-            const tg = (side === 'home' ? m.score.fullTime.home : m.score.fullTime.away) ?? 0;
-            const og = (side === 'home' ? m.score.fullTime.away : m.score.fullTime.home) ?? 0;
-            if (tg > og) {
+            break;
+          case 'THIRD_PLACE':
+            if (!fin) {
+              securedPoints = SCORING.THIRD_PLACE;
+              knockoutAward = { label: '🥉 3位決定戦へ (確定: 4位 50k)', points: SCORING.SEMI_FINAL, type: 'SEMI_FINAL' };
+            } else if (won) {
               finalResult = 'THIRD_PLACE';
+              securedPoints = SCORING.THIRD_PLACE;
               knockoutAward = { label: '🥉 3位', points: SCORING.THIRD_PLACE, type: 'THIRD_PLACE' };
             } else {
-              // 4位 = SF 敗退と同じ 50,000
-              knockoutAward = { label: '4位 (SF敗退と同点)', points: SCORING.SEMI_FINAL, type: 'SEMI_FINAL' };
+              securedPoints = SCORING.SEMI_FINAL;
+              knockoutAward = { label: '4位 (3位決定戦で敗退)', points: SCORING.SEMI_FINAL, type: 'SEMI_FINAL' };
             }
-          } else {
-            // 3位決定戦 未消化 → SF 敗退分だけ暫定確定
-            knockoutAward = { label: '🏟 3位決定戦進出 (暫定: SF敗退分)', points: SCORING.SEMI_FINAL, type: 'SEMI_FINAL' };
-          }
-        } else if (stage === 'SEMI_FINALS') {
-          knockoutAward = { label: 'ベスト4 到達', points: SCORING.SEMI_FINAL, type: 'SEMI_FINAL' };
-        } else if (stage === 'QUARTER_FINALS') {
-          knockoutAward = { label: 'ベスト8 到達', points: SCORING.QUARTER_FINAL, type: 'QUARTER_FINAL' };
-        } else if (stage === 'LAST_16') {
-          knockoutAward = { label: 'ベスト16 到達', points: SCORING.ROUND_OF_16, type: 'ROUND_OF_16' };
-        } else if (stage === 'LAST_32') {
-          knockoutAward = { label: 'ベスト32 到達', points: SCORING.ROUND_OF_32, type: 'ROUND_OF_32' };
+            break;
+          case 'SEMI_FINALS':
+            // 準決勝に出た時点で最低 4 位 (50k) が確定。敗者は 3 位決定戦へ (敗退ではない)。
+            securedPoints = won ? SCORING.RUNNER_UP : SCORING.THIRD_PLACE;
+            inThirdPlaceMatch = lost;
+            knockoutAward = {
+              label: lost ? 'ベスト4 (3位決定戦へ・確定50k)' : 'ベスト4以上確定 (50k)',
+              points: SCORING.SEMI_FINAL,
+              type: 'SEMI_FINAL',
+            };
+            break;
+          case 'QUARTER_FINALS':
+            if (lost) {
+              knockoutAward = { label: 'ベスト8で敗退', points: SCORING.QUARTER_FINAL, type: 'QUARTER_FINAL' };
+            } else {
+              securedPoints = won ? SCORING.SEMI_FINAL : SCORING.QUARTER_FINAL;
+            }
+            break;
+          case 'LAST_16':
+            if (lost) {
+              knockoutAward = { label: 'ベスト16で敗退', points: SCORING.ROUND_OF_16, type: 'ROUND_OF_16' };
+            } else {
+              securedPoints = won ? SCORING.QUARTER_FINAL : SCORING.ROUND_OF_16;
+            }
+            break;
+          case 'LAST_32':
+            if (lost) {
+              knockoutAward = { label: 'ベスト32で敗退', points: SCORING.ROUND_OF_32, type: 'ROUND_OF_32' };
+            } else {
+              securedPoints = won ? SCORING.ROUND_OF_16 : 0; // 未消化 R32 = 確定 0 (幻ポイント修正の核心)
+            }
+            break;
         }
-        break; // 最も奥のステージで打ち切り (排他)
       }
 
       if (knockoutAward) {
@@ -144,16 +216,18 @@ export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
       }
 
       const teamPoints = groupTeamPoints + knockoutTeamPoints;
+      // SECURED は総合の最低保証 = 予選 + (KO floor と LOCKED の大きい方)
+      securedPoints = groupTeamPoints + Math.max(securedPoints, knockoutTeamPoints);
       groupPts += groupTeamPoints;
       knockoutPts += knockoutTeamPoints;
 
-      // 敗退判定: 出場した最終ステージで負けていれば eliminated
       const eliminated = isEliminated(team, matches);
       const currentStage = furthestStage;
 
       teamScores[team] = {
         team,
         points: teamPoints,
+        securedPoints,
         wins,
         draws,
         losses,
@@ -162,10 +236,11 @@ export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
         currentStage,
         furthestStage,
         eliminated,
+        inThirdPlaceMatch,
         finalResult,
         breakdown,
       };
-      total += teamPoints;
+      total += teamPoints; // 合計は LOCKED のみ (securedPoints は算入しない)
     }
 
     return {
@@ -195,28 +270,20 @@ export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
 }
 
 function isEliminated(team: string, matches: MatchResult[]): boolean {
-  // 出場した最も新しいステージで完了試合があり、敗退している場合 true
-  const involved = matches
-    .filter((m) => teamInMatch(team, m) !== null)
-    .sort((a, b) => stageRank(b.stage) - stageRank(a.stage) || new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime());
-  for (const m of involved) {
-    if (!isFinished(m)) return false; // 進行中／未開始の試合があるなら継続中
-    const side = teamInMatch(team, m)!;
-    const tg = (side === 'home' ? m.score.fullTime.home : m.score.fullTime.away) ?? 0;
-    const og = (side === 'home' ? m.score.fullTime.away : m.score.fullTime.home) ?? 0;
-    if (m.stage === 'GROUP_STAGE') {
-      // グループステージ全試合終了かつトーナメント進出していない場合のみ敗退
-      const gMatches = matches.filter((x) => x.stage === 'GROUP_STAGE' && teamInMatch(team, x));
-      const allDone = gMatches.length >= 3 && gMatches.every(isFinished);
-      const advanced = matches.some((x) => x.stage !== 'GROUP_STAGE' && teamInMatch(team, x));
-      if (allDone && !advanced) return true;
-      return false;
-    }
-    // ノックアウト：敗戦したら脱落
-    if (tg < og) return true;
-    return false;
+  // KO に出ているなら、最も奥の KO 試合の結果で判定
+  const ko = matches
+    .filter((m) => m.stage !== 'GROUP_STAGE' && teamInMatch(team, m) !== null)
+    .sort((a, b) => stageRank(b.stage) - stageRank(a.stage));
+  if (ko.length > 0) {
+    const top = ko[0];
+    if (!isFinished(top)) return false; // 試合前/進行中は継続
+    if (top.stage === 'SEMI_FINALS') return false; // 準決勝敗者は 3 位決定戦へ (敗退でない)
+    // R32/R16/QF 敗戦・決勝で準優勝・3位決定戦の決着 → 敗退。優勝は false (🏆 表示)。
+    return lostMatch(team, top);
   }
-  return false;
+  // KO に出ていない: 予選全消化かつ未進出なら敗退
+  const g = matches.filter((m) => m.stage === 'GROUP_STAGE' && teamInMatch(team, m) !== null);
+  return g.length >= 3 && g.every(isFinished);
 }
 
 export function calculateGroupStandings(

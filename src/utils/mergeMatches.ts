@@ -7,6 +7,8 @@ export interface EspnPatch {
   minute: number | null;
   /** ESPN 上のステータス (FINISHED は espnFinal フラグに落とす) */
   status: MatchStatus;
+  /** 勝者 (PK 決着の解決用)。KO 戦が引分→PK のとき得点計算で必要。 */
+  winner?: 'HOME' | 'AWAY' | 'DRAW' | null;
 }
 
 const STATUS_RANK: Record<string, number> = {
@@ -72,6 +74,8 @@ export function mergeMatch(
           home: espn.home ?? m.score.fullTime.home,
           away: espn.away ?? m.score.fullTime.away,
         },
+        // 正式 FINISHED に昇格する時だけ勝者を採用 (KO の PK 決着の解決用)
+        winner: promoteFinal ? (espn.winner ?? m.score.winner) : m.score.winner,
       },
     };
   }

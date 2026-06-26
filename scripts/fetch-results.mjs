@@ -147,6 +147,15 @@ function mapFdMatches(fdData, aliases) {
           away: m.score?.fullTime?.away ?? null,
         },
         halfTime: m.score?.halfTime,
+        winner:
+          m.score?.winner === 'HOME_TEAM'
+            ? 'HOME'
+            : m.score?.winner === 'AWAY_TEAM'
+              ? 'AWAY'
+              : m.score?.winner === 'DRAW'
+                ? 'DRAW'
+                : null,
+        penalties: m.score?.penalties ?? undefined,
       },
       fdId: m.id != null ? String(m.id) : undefined,
       source: 'football-data',
@@ -160,17 +169,38 @@ function mapFdMatches(fdData, aliases) {
   return out;
 }
 
+/** ESPN の season.slug → アプリの MatchStage */
+const ESPN_SLUG_TO_STAGE = {
+  'group-stage': 'GROUP_STAGE',
+  'round-of-32': 'LAST_32',
+  'round-of-16': 'LAST_16',
+  quarterfinals: 'QUARTER_FINALS',
+  'quarter-finals': 'QUARTER_FINALS',
+  semifinals: 'SEMI_FINALS',
+  'semi-finals': 'SEMI_FINALS',
+  '3rd-place': 'THIRD_PLACE',
+  'third-place': 'THIRD_PLACE',
+  '3rd-place-match': 'THIRD_PLACE',
+  final: 'FINAL',
+};
+
 /**
- * KO ステージを日付から推定 (ESPN 単独モード用。fd 稼働後は fd が正とする)
- * 注: 米西海岸の夜試合は UTC で翌日に食み出すため、GS 境界は 6/28 (UTC) まで。
+ * ステージは ESPN の本来のラウンド情報 (season.slug) を最優先。
+ * 取れない時のみ日付推定にフォールバック (WC2026 実日程: 予選〜6/27, R32 6/28-7/3,
+ * R16 7/4-7/7, QF 7/9-7/11, SF 7/14-7/15, 3決 7/18, 決勝 7/19)。
  */
+function stageFromEspn(ev, utcDate) {
+  const slug = String(ev?.season?.slug ?? ev?.competitions?.[0]?.season?.slug ?? '').toLowerCase();
+  return ESPN_SLUG_TO_STAGE[slug] ?? stageFromDate(utcDate);
+}
+
 function stageFromDate(iso) {
   const d = iso.slice(0, 10);
-  if (d <= '2026-06-28') return 'GROUP_STAGE';
-  if (d <= '2026-07-04') return 'LAST_32';
-  if (d <= '2026-07-08') return 'LAST_16';
-  if (d <= '2026-07-12') return 'QUARTER_FINALS';
-  if (d <= '2026-07-16') return 'SEMI_FINALS';
+  if (d <= '2026-06-27') return 'GROUP_STAGE';
+  if (d <= '2026-07-03') return 'LAST_32';
+  if (d <= '2026-07-07') return 'LAST_16';
+  if (d <= '2026-07-11') return 'QUARTER_FINALS';
+  if (d <= '2026-07-15') return 'SEMI_FINALS';
   if (d <= '2026-07-18') return 'THIRD_PLACE';
   return 'FINAL';
 }
@@ -203,7 +233,7 @@ function mapEspnEvent(ev, aliases) {
   const away = resolve(awayC);
   if (!home || !away) return null;
   const utcDate = new Date(ev.date ?? comp.date).toISOString();
-  const stage = stageFromDate(utcDate);
+  const stage = stageFromEspn(ev, utcDate);
   const hg = aliases.groups.get(home);
   const ag = aliases.groups.get(away);
   const group = stage === 'GROUP_STAGE' && hg && hg === ag ? `Group ${hg}` : null;
@@ -212,6 +242,17 @@ function mapEspnEvent(ev, aliases) {
     return Number.isFinite(n) ? n : null;
   };
   const status = espnStatus(ev);
+  // 勝者 (PK 決着の解決用)。competitor.winner を最優先、無ければスコアで判定。
+  let winner = null;
+  if (status === 'FINISHED') {
+    if (homeC?.winner === true) winner = 'HOME';
+    else if (awayC?.winner === true) winner = 'AWAY';
+    else {
+      const hs = toScore(homeC);
+      const as = toScore(awayC);
+      if (hs != null && as != null) winner = hs > as ? 'HOME' : hs < as ? 'AWAY' : 'DRAW';
+    }
+  }
   return {
     id: matchId(home, away, utcDate),
     utcDate,
@@ -226,6 +267,7 @@ function mapEspnEvent(ev, aliases) {
         home: status === 'TIMED' || status === 'SCHEDULED' ? null : toScore(homeC),
         away: status === 'TIMED' || status === 'SCHEDULED' ? null : toScore(awayC),
       },
+      winner,
     },
     espnId: ev.id != null ? String(ev.id) : undefined,
     source: 'espn',
@@ -417,7 +459,9 @@ async function singlePass(aliases) {
 
   // 2) ESPN
   const needSweep =
+    process.env.FORCE_SWEEP === '1' ||
     prevMatches.filter((m) => m.stage === 'GROUP_STAGE').length < 72 ||
+    prevMatches.filter((m) => m.stage === 'GROUP_STAGE').length > 72 || // 誤分類で水増し → 要再走査
     !prev?.meta?.lastFullSweep ||
     Date.now() - Date.parse(prev.meta.lastFullSweep) > FULL_SWEEP_TTL_MS;
   const today = new Date();

@@ -46,6 +46,7 @@ interface RawEspnEvent {
     competitors?: {
       homeAway?: string;
       score?: string | number;
+      winner?: boolean;
       team?: { displayName?: string; name?: string; abbreviation?: string };
     }[];
   }[];
@@ -197,11 +198,22 @@ export function useEspnLive(matches: MatchResult[]): Record<string, EspnPatch> {
           };
           const status = espnStatus(ev);
           if (status === 'TIMED' || status === 'SCHEDULED') continue; // 開始前は何も当てない
+          let winner: 'HOME' | 'AWAY' | 'DRAW' | null = null;
+          if (status === 'FINISHED') {
+            if (homeC.winner === true) winner = 'HOME';
+            else if (awayC.winner === true) winner = 'AWAY';
+            else {
+              const hs = toScore(homeC.score);
+              const as = toScore(awayC.score);
+              if (hs != null && as != null) winner = hs > as ? 'HOME' : hs < as ? 'AWAY' : 'DRAW';
+            }
+          }
           next[matchKey] = {
             home: toScore(homeC.score),
             away: toScore(awayC.score),
             minute: espnMinute(ev),
             status,
+            winner,
           };
         }
         if (alive) {
@@ -235,7 +247,7 @@ export function useEspnLive(matches: MatchResult[]): Record<string, EspnPatch> {
     );
     for (const [id, f] of Object.entries(finals)) {
       if (!canonicalFinished.has(id)) {
-        out[id] = { home: f.home, away: f.away, minute: null, status: 'FINISHED' };
+        out[id] = { home: f.home, away: f.away, minute: null, status: 'FINISHED', winner: f.winner ?? null };
       }
     }
     return { ...out, ...patches };
