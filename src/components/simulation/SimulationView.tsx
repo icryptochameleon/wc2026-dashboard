@@ -93,6 +93,7 @@ export function SimulationView() {
   const [agg, setAgg] = useState<{
     wins: Record<PlayerId, number>;
     devSum: Record<PlayerId, number>; // 各回の平均偏差の総和 → ÷runs で期待上振れ
+    sfSum: Record<PlayerId, number>; // ベスト4 (準決勝=優勝/準優勝/3位/4位) に残したチーム数の総和
     runs: number;
   } | null>(null);
 
@@ -111,13 +112,19 @@ export function SimulationView() {
     const RUNS = 1000;
     const wins = { A: 0, B: 0, C: 0, D: 0 } as Record<PlayerId, number>;
     const devSum = { A: 0, B: 0, C: 0, D: 0 } as Record<PlayerId, number>;
+    const sfSum = { A: 0, B: 0, C: 0, D: 0 } as Record<PlayerId, number>;
     for (let i = 0; i < RUNS; i++) {
       const o = simulateTournament(field, championOdds);
       const ls = buildPlayerLines(o, field, baseByPlayer, settings.playerNames);
       wins[ls[0].id] += 1; // 最終1位 (同点は先頭勝ち・稀)
       for (const l of ls) devSum[l.id] += l.dev; // 平均偏差を累積
+      // ベスト4 = 準決勝に進んだ 4 チーム (優勝/準優勝/3位/4位)
+      for (const t of [o.champion, o.runnerUp, o.third, o.fourth]) {
+        const pid = getPlayerOfTeam(t);
+        if (pid) sfSum[pid] += 1;
+      }
     }
-    setAgg({ wins, devSum, runs: RUNS });
+    setAgg({ wins, devSum, sfSum, runs: RUNS });
     setOutcome(null);
   };
 
@@ -183,22 +190,18 @@ export function SimulationView() {
               id,
               p: agg.wins[id] / agg.runs,
               avgDev: agg.devSum[id] / agg.runs,
+              sfAvg: agg.sfSum[id] / agg.runs,
             }))
               .sort((a, b) => b.p - a.p)
-              .map(({ id, p, avgDev }) => (
+              .map(({ id, p, avgDev, sfAvg }) => (
                 <div key={id}>
                   <div className="flex items-center justify-between text-sm mb-1">
                     <span className="flex items-center gap-2">
                       <span className="badge-dot" style={{ backgroundColor: PLAYERS[id].color }} />
                       <span className="font-semibold">{settings.playerNames[id]}</span>
                     </span>
-                    <span className="flex items-baseline gap-2">
-                      <span className={`text-xs tabular-nums ${devColor(avgDev)}`}>
-                        平均{signed(avgDev)}
-                      </span>
-                      <span className="font-heading tabular-nums w-14 text-right" style={{ color: PLAYERS[id].color }}>
-                        {(p * 100).toFixed(1)}%
-                      </span>
+                    <span className="font-heading tabular-nums w-14 text-right" style={{ color: PLAYERS[id].color }}>
+                      {(p * 100).toFixed(1)}%
                     </span>
                   </div>
                   <div className="h-2 rounded-full bg-navy-900/60 overflow-hidden">
@@ -207,10 +210,15 @@ export function SimulationView() {
                       style={{ width: `${p * 100}%`, backgroundColor: PLAYERS[id].color }}
                     />
                   </div>
+                  <div className="flex items-center justify-between text-[10px] mt-0.5">
+                    <span className="text-slate-400">🏅 ベスト4 平均 <b className="text-slate-200">{sfAvg.toFixed(1)}</b> 国</span>
+                    <span className={`tabular-nums ${devColor(avgDev)}`}>期待上振れ 平均{signed(avgDev)}</span>
+                  </div>
                 </div>
               ))}
             <p className="text-[10px] text-slate-500">
-              <b>%</b> = 最終1位になった割合。<b>平均±</b> = 4人平均からの期待上振れ (プラスほど稼げる編成)。
+              <b>%</b> = 最終1位になった割合。<b>ベスト4 平均◯国</b> = 準決勝に残せるチーム数の期待値。
+              <b>期待上振れ</b> = 4人平均からの平均差 (プラスほど稼げる編成)。
             </p>
           </div>
         </section>
