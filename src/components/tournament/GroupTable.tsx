@@ -3,6 +3,7 @@ import { GROUPS, getPlayerOfTeam, PLAYERS } from '../../config/teams';
 import {
   calculateGroupStandings,
   computeClinchedTop2,
+  computeMatchClinchNotes,
   getGroupMatches,
 } from '../../utils/scoreCalculator';
 import { getFlag, getTeamNameJa } from '../../utils/teamUtils';
@@ -28,6 +29,11 @@ export function GroupTable({ letter }: Props) {
   const standings = useMemo(() => calculateGroupStandings(matches, teams), [matches, teams]);
   const clinched = useMemo(() => computeClinchedTop2(matches, teams), [matches, teams]);
   const groupMatches = useMemo(() => getGroupMatches(matches, teams), [matches, teams]);
+  const clinchNotes = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof computeMatchClinchNotes>[number]>();
+    for (const n of computeMatchClinchNotes(matches, teams)) map.set(n.matchId, n);
+    return map;
+  }, [matches, teams]);
   const playedCount = groupMatches.filter((m) => m.status === 'FINISHED').length;
 
   return (
@@ -117,6 +123,9 @@ export function GroupTable({ letter }: Props) {
             const ag = m.score.fullTime.away;
             const homeWin = done && hg != null && ag != null && hg > ag;
             const awayWin = done && hg != null && ag != null && ag > hg;
+            const note = !done ? clinchNotes.get(m.id) : undefined;
+            const ja = (names: string[]) =>
+              names.map((n) => `${getFlag(n)}${getTeamNameJa(n)}`).join('・');
             return (
               <div key={m.id} className="px-3 py-2 text-xs">
                 <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
@@ -137,6 +146,28 @@ export function GroupTable({ letter }: Props) {
                     {getTeamNameJa(m.awayTeam.name)} {getFlag(m.awayTeam.name)}
                   </span>
                 </div>
+                {note && (note.homeWin.length > 0 || note.draw.length > 0 || note.awayWin.length > 0) && (
+                  <div className="mt-1.5 space-y-0.5 text-[10px] bg-navy-900/40 rounded px-2 py-1">
+                    {note.homeWin.length > 0 && (
+                      <div>
+                        <span className="text-slate-400">{getTeamNameJa(m.homeTeam.name)}勝利 →</span>{' '}
+                        <span className="text-green-300">{ja(note.homeWin)} 突破</span>
+                      </div>
+                    )}
+                    {note.draw.length > 0 && (
+                      <div>
+                        <span className="text-slate-400">引分 →</span>{' '}
+                        <span className="text-green-300">{ja(note.draw)} 突破</span>
+                      </div>
+                    )}
+                    {note.awayWin.length > 0 && (
+                      <div>
+                        <span className="text-slate-400">{getTeamNameJa(m.awayTeam.name)}勝利 →</span>{' '}
+                        <span className="text-green-300">{ja(note.awayWin)} 突破</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

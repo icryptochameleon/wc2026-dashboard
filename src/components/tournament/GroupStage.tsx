@@ -1,5 +1,6 @@
 import { GROUP_LETTERS } from '../../config/teams';
 import { GroupTable } from './GroupTable';
+import { WildcardRace } from './WildcardRace';
 
 export function GroupStage() {
   return (
@@ -27,6 +28,7 @@ export function GroupStage() {
           <GroupTable key={g} letter={g} />
         ))}
       </div>
+      <WildcardRace />
     </section>
   );
 }

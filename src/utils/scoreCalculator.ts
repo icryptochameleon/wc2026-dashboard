@@ -384,6 +384,17 @@ export function computeClinchedTop2(
   }
 
   const clinched = new Set<string>();
+
+  // 全試合終了済みなら、得失点差等のタイブレーク込みの実順位で上位 2 を確定。
+  // (勝点同点の 2 位/3 位を「同点以上」で未確定にしてしまうバグを回避)
+  if (remaining.length === 0) {
+    const finalStandings = calculateGroupStandings(matches, teams);
+    for (const s of finalStandings.slice(0, 2)) {
+      if (played[s.team] >= 3) clinched.add(s.team);
+    }
+    return clinched;
+  }
+
   const total = 3 ** remaining.length;
   for (const x of teams) {
     if (played[x] === 0) continue; // 未消化チームは確定し得ない
@@ -423,6 +434,166 @@ export function getGroupMatches(matches: MatchResult[], teams: string[]): MatchR
         set.has(normalize(m.awayTeam.name)),
     )
     .sort((a, b) => new Date(a.utcDate).getTime() - new Date(b.utcDate).getTime());
+}
+
+/** あるグループの「3位チームが取りうる最大勝点」を残り試合の総当たりで求める */
+function maxThirdPlacePoints(matches: MatchResult[], teams: string[]): number {
+  const base: Record<string, number> = {};
+  const inGroup = new Map(teams.map((t) => [normalize(t), t]));
+  for (const t of teams) base[t] = 0;
+  const remaining: Array<[string, string]> = [];
+  for (const m of matches) {
+    if (m.stage !== 'GROUP_STAGE') continue;
+    const home = inGroup.get(normalize(m.homeTeam.name));
+    const away = inGroup.get(normalize(m.awayTeam.name));
+    if (!home || !away) continue;
+    if (isFinished(m) && m.score.fullTime.home !== null && m.score.fullTime.away !== null) {
+      const hg = m.score.fullTime.home;
+      const ag = m.score.fullTime.away;
+      if (hg > ag) base[home] += 3;
+      else if (hg < ag) base[away] += 3;
+      else {
+        base[home]++;
+        base[away]++;
+      }
+    } else {
+      remaining.push([home, away]);
+    }
+  }
+  let best = 0;
+  const total = 3 ** remaining.length;
+  for (let combo = 0; combo < total; combo++) {
+    const pts = { ...base };
+    let c = combo;
+    for (const [h, a] of remaining) {
+      const o = c % 3;
+      c = (c - o) / 3;
+      if (o === 0) pts[h] += 3;
+      else if (o === 1) pts[a] += 3;
+      else {
+        pts[h]++;
+        pts[a]++;
+      }
+    }
+    const sorted = teams.map((t) => pts[t]).sort((x, y) => y - x);
+    if (sorted[2] > best) best = sorted[2]; // 3 番目に高い勝点
+  }
+  return best;
+}
+
+export interface ThirdPlaceEntry {
+  team: string;
+  group: string;
+  points: number;
+  goalDifference: number;
+  goalsFor: number;
+  played: number;
+  complete: boolean;
+  rank: number; // 1-12 (3位チーム同士の順位)
+  inZone: boolean; // 現時点で上位 8 (= 突破圏内)
+  status: 'confirmed' | 'zone' | 'out'; // confirmed = 数学的に突破確定
+}
+
+/**
+ * 12 グループの 3 位チームを勝点・得失点で並べた「ワイルドカード当落」。
+ * 上位 8 がベスト32 進出。`confirmed` は全試合終了済みグループの 3 位のうち、
+ * 他グループ 3 位が最大化しても上位 8 から外れ得ないチーム (安全側の確定判定)。
+ */
+export function computeThirdPlaceRace(matches: MatchResult[], groups: Record<string, string[]>): ThirdPlaceEntry[] {
+  const entries: Array<Omit<ThirdPlaceEntry, 'rank' | 'inZone' | 'status'> & { letter: string }> = [];
+  const maxByGroup: Record<string, number> = {};
+  for (const [letter, teams] of Object.entries(groups)) {
+    const st = calculateGroupStandings(matches, teams);
+    const complete = st.every((s) => s.played >= 3);
+    const third = st[2];
+    maxByGroup[letter] = maxThirdPlacePoints(matches, teams);
+    entries.push({
+      team: third.team,
+      group: letter,
+      points: third.points,
+      goalDifference: third.goalDifference,
+      goalsFor: third.goalsFor,
+      played: third.played,
+      complete,
+      letter,
+    });
+  }
+  // 3 位同士を勝点→得失点→総得点で並べる
+  entries.sort(
+    (a, b) =>
+      b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.group.localeCompare(b.group),
+  );
+  return entries.map((e, i) => {
+    const inZone = i < 8;
+    let status: ThirdPlaceEntry['status'] = inZone ? 'zone' : 'out';
+    if (e.complete) {
+      // 他グループ 3 位が最大化しても、自分以上になり得る数が 7 以下なら確定
+      let canBeAtOrAbove = 0;
+      for (const [letter, mx] of Object.entries(maxByGroup)) {
+        if (letter === e.letter) continue;
+        if (mx >= e.points) canBeAtOrAbove++;
+      }
+      if (canBeAtOrAbove <= 7) status = 'confirmed';
+    }
+    const { letter: _letter, ...rest } = e;
+    void _letter;
+    return { ...rest, rank: i + 1, inZone, status };
+  });
+}
+
+export interface MatchClinchNote {
+  matchId: string;
+  /** この試合の各結果で「新たに 2 位以内が確定」するチーム名 (日本語表示はUI側) */
+  homeWin: string[];
+  draw: string[];
+  awayWin: string[];
+}
+
+/** 1 試合の結果を仮定したときに 2 位以内が確定するチーム集合 */
+function clinchedIfOutcome(
+  matches: MatchResult[],
+  teams: string[],
+  matchId: string,
+  outcome: 'HOME' | 'DRAW' | 'AWAY',
+): Set<string> {
+  const cloned = matches.map((m) => {
+    if (m.id !== matchId) return m;
+    const fullTime =
+      outcome === 'HOME' ? { home: 1, away: 0 } : outcome === 'AWAY' ? { home: 0, away: 1 } : { home: 0, away: 0 };
+    return {
+      ...m,
+      status: 'FINISHED' as const,
+      score: { ...m.score, fullTime, winner: outcome === 'DRAW' ? ('DRAW' as const) : outcome },
+    };
+  });
+  return computeClinchedTop2(cloned, teams);
+}
+
+/**
+ * グループ内の未消化試合について、各結果 (ホーム勝/分/アウェイ勝) で
+ * 新たに 2 位以内が確定するチームを算出 (「引分で〇〇突破」注釈用)。
+ * 注: 勝利は 1-0 を仮定するため得失点差依存の確定は安全側に控えめになる。
+ */
+export function computeMatchClinchNotes(matches: MatchResult[], teams: string[]): MatchClinchNote[] {
+  const already = computeClinchedTop2(matches, teams);
+  const notes: MatchClinchNote[] = [];
+  for (const m of matches) {
+    if (m.stage !== 'GROUP_STAGE' || isFinished(m)) continue;
+    if (!teams.includes(m.homeTeam.name) || !teams.includes(m.awayTeam.name)) {
+      // normalize 経由で所属確認
+      const inGroup = (n: string) => teams.some((t) => normalize(t) === normalize(n));
+      if (!inGroup(m.homeTeam.name) || !inGroup(m.awayTeam.name)) continue;
+    }
+    const diff = (oc: 'HOME' | 'DRAW' | 'AWAY') =>
+      [...clinchedIfOutcome(matches, teams, m.id, oc)].filter((t) => !already.has(t));
+    const homeWin = diff('HOME');
+    const draw = diff('DRAW');
+    const awayWin = diff('AWAY');
+    if (homeWin.length || draw.length || awayWin.length) {
+      notes.push({ matchId: m.id, homeWin, draw, awayWin });
+    }
+  }
+  return notes;
 }
 
 export function getRecentResults(matches: MatchResult[], limit = 10): MatchResult[] {
