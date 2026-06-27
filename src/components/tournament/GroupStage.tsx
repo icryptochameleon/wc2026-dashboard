@@ -21,7 +21,7 @@ export function GroupStage() {
         </div>
       </div>
       <p className="text-[10px] text-slate-500 mb-3">
-        グループ名をタップすると全試合結果が開きます。「突破」= 2位以内が数学的に確定したチーム。
+        グループ名をタップすると全試合結果が開きます。「突破」= 2位以内が確定 /「WC突破」= 3位ワイルドカードで突破確定。
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {GROUP_LETTERS.map((g) => (

@@ -4,6 +4,7 @@ import {
   calculateGroupStandings,
   computeClinchedTop2,
   computeMatchClinchNotes,
+  computeThirdPlaceRace,
   getGroupMatches,
 } from '../../utils/scoreCalculator';
 import { getFlag, getTeamNameJa } from '../../utils/teamUtils';
@@ -14,8 +15,8 @@ interface Props {
   letter: string;
 }
 
-function rowBg(rank: number, clinched: boolean): string {
-  if (clinched) return 'bg-green-500/25';
+function rowBg(rank: number, advanced: boolean): string {
+  if (advanced) return 'bg-green-500/25';
   if (rank <= 2) return 'bg-green-500/10';
   if (rank === 3) return 'bg-amber-500/10';
   return 'bg-slate-500/5';
@@ -28,6 +29,14 @@ export function GroupTable({ letter }: Props) {
 
   const standings = useMemo(() => calculateGroupStandings(matches, teams), [matches, teams]);
   const clinched = useMemo(() => computeClinchedTop2(matches, teams), [matches, teams]);
+  // 3位ワイルドカードで突破確定したチーム (全グループ横断)
+  const wildcardConfirmed = useMemo(() => {
+    const s = new Set<string>();
+    for (const e of computeThirdPlaceRace(matches, GROUPS)) {
+      if (e.status === 'confirmed') s.add(e.team);
+    }
+    return s;
+  }, [matches]);
   const groupMatches = useMemo(() => getGroupMatches(matches, teams), [matches, teams]);
   const clinchNotes = useMemo(() => {
     const map = new Map<string, ReturnType<typeof computeMatchClinchNotes>[number]>();
@@ -76,8 +85,10 @@ export function GroupTable({ letter }: Props) {
               const pid = getPlayerOfTeam(s.team);
               const color = pid ? PLAYERS[pid].color : '#666';
               const isClinched = clinched.has(s.team);
+              const isWcConfirmed = !isClinched && wildcardConfirmed.has(s.team);
+              const advanced = isClinched || isWcConfirmed;
               return (
-                <tr key={s.team} className={`border-t border-white/5 ${rowBg(rank, isClinched)}`}>
+                <tr key={s.team} className={`border-t border-white/5 ${rowBg(rank, advanced)}`}>
                   <td className="px-2 py-1.5 font-mono text-slate-400">{rank}</td>
                   <td className="px-1 py-1.5">
                     <div className="flex items-center gap-1.5 min-w-0">
@@ -95,6 +106,14 @@ export function GroupTable({ letter }: Props) {
                           title="2位以内が数学的に確定 (Best32 自動突破)"
                         >
                           突破
+                        </span>
+                      )}
+                      {isWcConfirmed && (
+                        <span
+                          className="shrink-0 text-[9px] px-1 py-0.5 rounded-full bg-green-500/30 text-green-300 border border-green-400/40 font-bold"
+                          title="3位ワイルドカードで Best32 突破が確定"
+                        >
+                          WC突破
                         </span>
                       )}
                     </div>
