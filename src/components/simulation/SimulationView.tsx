@@ -7,6 +7,18 @@ import type { PlayerId } from '../../types';
 
 const NF = new Intl.NumberFormat('ja-JP');
 
+/** 平均との差を符号付きで整形 (+12,000 / -8,000 / ±0) */
+function signed(n: number): string {
+  const r = Math.round(n);
+  if (r === 0) return '±0';
+  return `${r > 0 ? '+' : '−'}${NF.format(Math.abs(r))}`;
+}
+function devColor(n: number): string {
+  if (n > 0) return 'text-green-400';
+  if (n < 0) return 'text-red-400';
+  return 'text-slate-400';
+}
+
 interface PlayerLine {
   id: PlayerId;
   name: string;
@@ -14,6 +26,7 @@ interface PlayerLine {
   base: number; // 現在の確定ポイント (予選等)
   koGain: number; // シミュレーションで増える KO ポイント
   total: number;
+  dev: number; // 平均 (総得点÷4) との差 = 上振れ/下振れ
   teams: { team: string; stage: string; points: number }[]; // 出場チームの結果
 }
 
@@ -32,6 +45,7 @@ function buildPlayerLines(
       base: baseByPlayer[id],
       koGain: 0,
       total: baseByPlayer[id],
+      dev: 0,
       teams: [],
     };
   }
@@ -44,7 +58,10 @@ function buildPlayerLines(
     lines[pid].total += ko.points;
     lines[pid].teams.push({ team, stage: ko.stage, points: ko.points });
   }
+  // 平均 (4人の総得点 ÷ 4) からの偏差。合計は毎回一定なので「上振れ」が勝負どころ
+  const avg = PLAYER_IDS.reduce((s, id) => s + lines[id].total, 0) / PLAYER_IDS.length;
   for (const id of PLAYER_IDS) {
+    lines[id].dev = lines[id].total - avg;
     lines[id].teams.sort((a, b) => b.points - a.points);
   }
   return PLAYER_IDS.map((id) => lines[id]).sort((a, b) => b.total - a.total);
@@ -73,7 +90,11 @@ export function SimulationView() {
 
   const [outcome, setOutcome] = useState<SimOutcome | null>(null);
   const [runId, setRunId] = useState(0);
-  const [agg, setAgg] = useState<{ wins: Record<PlayerId, number>; runs: number } | null>(null);
+  const [agg, setAgg] = useState<{
+    wins: Record<PlayerId, number>;
+    devSum: Record<PlayerId, number>; // 各回の平均偏差の総和 → ÷runs で期待上振れ
+    runs: number;
+  } | null>(null);
 
   const lines = useMemo(
     () => (outcome ? buildPlayerLines(outcome, field, baseByPlayer, settings.playerNames) : null),
@@ -89,14 +110,14 @@ export function SimulationView() {
   const runAggregate = () => {
     const RUNS = 1000;
     const wins = { A: 0, B: 0, C: 0, D: 0 } as Record<PlayerId, number>;
+    const devSum = { A: 0, B: 0, C: 0, D: 0 } as Record<PlayerId, number>;
     for (let i = 0; i < RUNS; i++) {
       const o = simulateTournament(field, championOdds);
       const ls = buildPlayerLines(o, field, baseByPlayer, settings.playerNames);
-      const top = ls[0];
-      // 同点は先頭勝ち (稀)
-      wins[top.id] += 1;
+      wins[ls[0].id] += 1; // 最終1位 (同点は先頭勝ち・稀)
+      for (const l of ls) devSum[l.id] += l.dev; // 平均偏差を累積
     }
-    setAgg({ wins, runs: RUNS });
+    setAgg({ wins, devSum, runs: RUNS });
     setOutcome(null);
   };
 
@@ -158,17 +179,26 @@ export function SimulationView() {
             <h3 className="font-heading text-base">📊 ドラフト優勝確率 ({agg.runs}回試行)</h3>
           </header>
           <div className="card-body space-y-3">
-            {PLAYER_IDS.map((id) => ({ id, p: agg.wins[id] / agg.runs }))
+            {PLAYER_IDS.map((id) => ({
+              id,
+              p: agg.wins[id] / agg.runs,
+              avgDev: agg.devSum[id] / agg.runs,
+            }))
               .sort((a, b) => b.p - a.p)
-              .map(({ id, p }) => (
+              .map(({ id, p, avgDev }) => (
                 <div key={id}>
                   <div className="flex items-center justify-between text-sm mb-1">
                     <span className="flex items-center gap-2">
                       <span className="badge-dot" style={{ backgroundColor: PLAYERS[id].color }} />
                       <span className="font-semibold">{settings.playerNames[id]}</span>
                     </span>
-                    <span className="font-heading tabular-nums" style={{ color: PLAYERS[id].color }}>
-                      {(p * 100).toFixed(1)}%
+                    <span className="flex items-baseline gap-2">
+                      <span className={`text-xs tabular-nums ${devColor(avgDev)}`}>
+                        平均{signed(avgDev)}
+                      </span>
+                      <span className="font-heading tabular-nums w-14 text-right" style={{ color: PLAYERS[id].color }}>
+                        {(p * 100).toFixed(1)}%
+                      </span>
                     </span>
                   </div>
                   <div className="h-2 rounded-full bg-navy-900/60 overflow-hidden">
@@ -180,7 +210,7 @@ export function SimulationView() {
                 </div>
               ))}
             <p className="text-[10px] text-slate-500">
-              現在の確定ポイント + シミュレーションの KO ポイントで最終1位になった割合。
+              <b>%</b> = 最終1位になった割合。<b>平均±</b> = 4人平均からの期待上振れ (プラスほど稼げる編成)。
             </p>
           </div>
         </section>
@@ -213,11 +243,16 @@ export function SimulationView() {
                     <span className="badge-dot" style={{ backgroundColor: l.color }} />
                     <span className="font-semibold flex-1">{l.name}</span>
                     <div className="text-right">
-                      <div className="font-heading text-xl tabular-nums" style={{ color: l.color }}>
-                        {NF.format(l.total)}
+                      <div className="flex items-baseline justify-end gap-2">
+                        <span className={`text-sm font-semibold tabular-nums ${devColor(l.dev)}`}>
+                          平均{signed(l.dev)}
+                        </span>
+                        <span className="font-heading text-xl tabular-nums" style={{ color: l.color }}>
+                          {NF.format(l.total)}
+                        </span>
                       </div>
                       {l.koGain > 0 && (
-                        <div className="text-[10px] text-green-400">+{NF.format(l.koGain)} (KO)</div>
+                        <div className="text-[10px] text-slate-400">KO +{NF.format(l.koGain)}</div>
                       )}
                     </div>
                   </div>
@@ -235,7 +270,8 @@ export function SimulationView() {
               ))}
             </ul>
             <p className="px-4 py-2 text-[10px] text-slate-500 border-t border-white/5">
-              現在の確定ポイントに、シミュレーションしたノックアウトの結果を加えた最終得点です。
+              得点は確定ポイント + シミュした KO の合計。4人の総得点は毎回同じなので、
+              <b className="text-slate-400">平均±</b>(= 4人平均との差)が勝負どころ。プラスが上振れ・マイナスが下振れ。
             </p>
           </section>
         </>
