@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage';
 import PlayerPage from './pages/PlayerPage';
 import TournamentPage from './pages/TournamentPage';
 import StatsPage from './pages/StatsPage';
+import SimulationPage from './pages/SimulationPage';
 import SettingsPage from './pages/SettingsPage';
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/players/:playerId" element={<PlayerPage />} />
           <Route path="/tournament" element={<TournamentPage />} />
           <Route path="/stats" element={<StatsPage />} />
+          <Route path="/simulation" element={<SimulationPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </main>

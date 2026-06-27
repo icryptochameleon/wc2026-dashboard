@@ -5,6 +5,7 @@ const tabs = [
   { to: '/players', label: '選手', icon: '👤' },
   { to: '/tournament', label: '対戦表', icon: '🏆' },
   { to: '/stats', label: '統計', icon: '📊' },
+  { to: '/simulation', label: '予想', icon: '🎲' },
   { to: '/settings', label: '設定', icon: '⚙️' },
 ];
 
@@ -13,7 +14,7 @@ export function TabBar() {
     <>
       {/* Mobile bottom bar */}
       <nav className="fixed bottom-0 inset-x-0 z-30 sm:hidden bg-navy-800/95 backdrop-blur border-t border-white/10 safe-bottom">
-        <ul className="grid grid-cols-5">
+        <ul className="grid grid-cols-6">
           {tabs.map((t) => (
             <li key={t.to}>
               <NavLink
