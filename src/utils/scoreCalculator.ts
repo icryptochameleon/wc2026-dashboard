@@ -1,4 +1,4 @@
-import { PLAYERS, PLAYER_IDS, getGroupOfTeam, getPlayerOfTeam, normalize } from '../config/teams';
+import { GROUPS, PLAYERS, PLAYER_IDS, getGroupOfTeam, getPlayerOfTeam, normalize } from '../config/teams';
 import { SCORING, stageRank } from '../config/scoring';
 import type {
   MatchResult,
@@ -56,6 +56,7 @@ function lostMatch(team: string, m: MatchResult): boolean {
 }
 
 export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
+  const qualified = computeQualifiedSet(matches); // ベスト32 進出済み (KO 組合せ未確定でも判定)
   const scores: PlayerScore[] = PLAYER_IDS.map((id) => {
     const profile = PLAYERS[id];
     const teamScores: Record<string, TeamScore> = {};
@@ -215,7 +216,7 @@ export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
       groupPts += groupTeamPoints;
       knockoutPts += knockoutTeamPoints;
 
-      const eliminated = isEliminated(team, matches);
+      const eliminated = isEliminated(team, matches, qualified);
       const currentStage = furthestStage;
 
       teamScores[team] = {
@@ -263,7 +264,28 @@ export function calculatePlayerScores(matches: MatchResult[]): PlayerScore[] {
   return scores;
 }
 
-function isEliminated(team: string, matches: MatchResult[]): boolean {
+/**
+ * ベスト32 に進出済みのチーム集合。
+ * - 全試合終了グループの上位2位 (実順位 = 得失点差込み)
+ * - 3位ワイルドカード圏内 (上位8の3位)
+ * KO の組み合わせがまだフィードに無くても「突破済み」を正しく判定するために使う。
+ */
+function computeQualifiedSet(matches: MatchResult[]): Set<string> {
+  const qualified = new Set<string>();
+  for (const teams of Object.values(GROUPS)) {
+    const st = calculateGroupStandings(matches, teams);
+    if (st.every((s) => s.played >= 3)) {
+      if (st[0]) qualified.add(st[0].team);
+      if (st[1]) qualified.add(st[1].team);
+    }
+  }
+  for (const e of computeThirdPlaceRace(matches, GROUPS)) {
+    if (e.inZone) qualified.add(e.team);
+  }
+  return qualified;
+}
+
+function isEliminated(team: string, matches: MatchResult[], qualified: Set<string>): boolean {
   // KO に出ているなら、最も奥の KO 試合の結果で判定
   const ko = matches
     .filter((m) => m.stage !== 'GROUP_STAGE' && teamInMatch(team, m) !== null)
@@ -275,9 +297,12 @@ function isEliminated(team: string, matches: MatchResult[]): boolean {
     // R32/R16/QF 敗戦・決勝で準優勝・3位決定戦の決着 → 敗退。優勝は false (🏆 表示)。
     return lostMatch(team, top);
   }
-  // KO に出ていない: 予選全消化かつ未進出なら敗退
-  const g = matches.filter((m) => m.stage === 'GROUP_STAGE' && teamInMatch(team, m) !== null);
-  return g.length >= 3 && g.every(isFinished);
+  // KO 試合がまだ無い: 予選全消化かつ「突破済み」でなければ敗退
+  const g = matches.filter(
+    (m) => m.stage === 'GROUP_STAGE' && teamInMatch(team, m) !== null && isRealGroupMatch(m),
+  );
+  if (g.length < 3 || !g.every(isFinished)) return false; // 予選消化中は継続
+  return !qualified.has(team); // 突破済みなら敗退ではない (R32 の組み合わせ待ち)
 }
 
 export function calculateGroupStandings(
