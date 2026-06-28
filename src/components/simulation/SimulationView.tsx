@@ -67,6 +67,122 @@ function buildPlayerLines(
   return PLAYER_IDS.map((id) => lines[id]).sort((a, b) => b.total - a.total);
 }
 
+/** ガウシアンカーネル密度推定。grid 上の密度を返す */
+function kdeCurve(samples: number[], grid: number[], h: number): number[] {
+  const n = samples.length;
+  if (n === 0 || h <= 0) return grid.map(() => 0);
+  const norm = 1 / (n * h * Math.sqrt(2 * Math.PI));
+  return grid.map((x) => {
+    let s = 0;
+    for (const v of samples) {
+      const u = (x - v) / h;
+      s += Math.exp(-0.5 * u * u);
+    }
+    return s * norm;
+  });
+}
+
+/**
+ * 4人の「平均からの偏差 (上振れ/下振れ)」分布図。
+ * X軸 = 平均との差 (額)、各回1000サンプルを正規分布風カーブで重ね描き。透明度で重なりを見せる。
+ */
+function DevDistribution({
+  devSamples,
+  names,
+}: {
+  devSamples: Record<PlayerId, number[]>;
+  names: Record<PlayerId, string>;
+}) {
+  const W = 340;
+  const H = 168;
+  const padL = 6;
+  const padR = 6;
+  const padT = 10;
+  const padB = 30;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  const chart = useMemo(() => {
+    const all = PLAYER_IDS.flatMap((id) => devSamples[id]);
+    if (all.length === 0) return null;
+    let M = Math.max(...all.map((v) => Math.abs(v)));
+    if (!isFinite(M) || M <= 0) M = 1;
+    M *= 1.08; // 端に少し余白
+    const GRID = 121;
+    const grid = Array.from({ length: GRID }, (_, i) => -M + (2 * M * i) / (GRID - 1));
+    const h = (2 * M) / 18; // バンド幅 (見やすさ優先の固定値)
+    const curves = PLAYER_IDS.map((id) => ({
+      id,
+      color: PLAYERS[id].color,
+      y: kdeCurve(devSamples[id], grid, h),
+    }));
+    const maxY = Math.max(1e-9, ...curves.flatMap((c) => c.y));
+    return { M, grid, curves, maxY };
+  }, [devSamples]);
+
+  if (!chart) return null;
+  const { M, grid, curves, maxY } = chart;
+
+  const sx = (x: number) => padL + ((x + M) / (2 * M)) * plotW;
+  const sy = (y: number) => padT + plotH - (y / maxY) * plotH;
+  const baseY = padT + plotH;
+
+  const areaPath = (ys: number[]) => {
+    let d = `M ${sx(grid[0]).toFixed(1)} ${baseY.toFixed(1)}`;
+    grid.forEach((x, i) => {
+      d += ` L ${sx(x).toFixed(1)} ${sy(ys[i]).toFixed(1)}`;
+    });
+    d += ` L ${sx(grid[grid.length - 1]).toFixed(1)} ${baseY.toFixed(1)} Z`;
+    return d;
+  };
+  const linePath = (ys: number[]) =>
+    grid.map((x, i) => `${i === 0 ? 'M' : 'L'} ${sx(x).toFixed(1)} ${sy(ys[i]).toFixed(1)}`).join(' ');
+
+  const ticks = [-M, -M / 2, 0, M / 2, M];
+
+  return (
+    <div className="mt-2">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-semibold text-slate-300">📈 上振れ/下振れの分布</span>
+        <span className="text-[10px] text-slate-500">←下振れ ・ 平均 ・ 上振れ→</span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" className="overflow-visible">
+        {/* 平均=0 の基準線 */}
+        <line x1={sx(0)} y1={padT} x2={sx(0)} y2={baseY} stroke="#94a3b8" strokeWidth={1} strokeDasharray="3 3" opacity={0.6} />
+        {/* 各プレイヤーの分布 (塗りは薄く、輪郭はくっきり) */}
+        {curves.map((c) => (
+          <path key={`a-${c.id}`} d={areaPath(c.y)} fill={c.color} fillOpacity={0.16} stroke="none" />
+        ))}
+        {curves.map((c) => (
+          <path key={`l-${c.id}`} d={linePath(c.y)} fill="none" stroke={c.color} strokeOpacity={0.9} strokeWidth={1.6} />
+        ))}
+        {/* X軸 */}
+        <line x1={padL} y1={baseY} x2={W - padR} y2={baseY} stroke="#475569" strokeWidth={1} />
+        {ticks.map((t, i) => (
+          <g key={i}>
+            <line x1={sx(t)} y1={baseY} x2={sx(t)} y2={baseY + 3} stroke="#475569" strokeWidth={1} />
+            <text x={sx(t)} y={baseY + 13} textAnchor="middle" className="fill-slate-400" fontSize={8}>
+              {Math.abs(t) < 1 ? '平均' : signed(t)}
+            </text>
+          </g>
+        ))}
+      </svg>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+        {PLAYER_IDS.map((id) => (
+          <span key={id} className="flex items-center gap-1 text-[10px]">
+            <span className="badge-dot" style={{ backgroundColor: PLAYERS[id].color }} />
+            <span className="text-slate-300">{names[id]}</span>
+          </span>
+        ))}
+      </div>
+      <p className="text-[10px] text-slate-500 mt-1">
+        各カーブ = 1000回試行での <b className="text-slate-400">平均との差</b> の出方。山が右ほど上振れしやすく、
+        鋭い山ほど安定。重なりは透明度で表示。
+      </p>
+    </div>
+  );
+}
+
 const STAGE_COLOR: Record<string, string> = {
   優勝: 'text-gold-500',
   準優勝: 'text-slate-200',
@@ -94,6 +210,7 @@ export function SimulationView() {
     wins: Record<PlayerId, number>;
     devSum: Record<PlayerId, number>; // 各回の平均偏差の総和 → ÷runs で期待上振れ
     sfSum: Record<PlayerId, number>; // ベスト4 (準決勝=優勝/準優勝/3位/4位) に残したチーム数の総和
+    devSamples: Record<PlayerId, number[]>; // 各回の平均偏差を全部保持 → 分布図用
     runs: number;
   } | null>(null);
 
@@ -113,18 +230,22 @@ export function SimulationView() {
     const wins = { A: 0, B: 0, C: 0, D: 0 } as Record<PlayerId, number>;
     const devSum = { A: 0, B: 0, C: 0, D: 0 } as Record<PlayerId, number>;
     const sfSum = { A: 0, B: 0, C: 0, D: 0 } as Record<PlayerId, number>;
+    const devSamples = { A: [], B: [], C: [], D: [] } as Record<PlayerId, number[]>;
     for (let i = 0; i < RUNS; i++) {
       const o = simulateTournament(field, championOdds);
       const ls = buildPlayerLines(o, field, baseByPlayer, settings.playerNames);
       wins[ls[0].id] += 1; // 最終1位 (同点は先頭勝ち・稀)
-      for (const l of ls) devSum[l.id] += l.dev; // 平均偏差を累積
+      for (const l of ls) {
+        devSum[l.id] += l.dev; // 平均偏差を累積
+        devSamples[l.id].push(l.dev); // 分布図用に全サンプル保持
+      }
       // ベスト4 = 準決勝に進んだ 4 チーム (優勝/準優勝/3位/4位)
       for (const t of [o.champion, o.runnerUp, o.third, o.fourth]) {
         const pid = getPlayerOfTeam(t);
         if (pid) sfSum[pid] += 1;
       }
     }
-    setAgg({ wins, devSum, sfSum, runs: RUNS });
+    setAgg({ wins, devSum, sfSum, devSamples, runs: RUNS });
     setOutcome(null);
   };
 
@@ -220,6 +341,7 @@ export function SimulationView() {
               <b>%</b> = 最終1位になった割合。<b>ベスト4 平均◯国</b> = 準決勝に残せるチーム数の期待値。
               <b>期待上振れ</b> = 4人平均からの平均差 (プラスほど稼げる編成)。
             </p>
+            <DevDistribution devSamples={agg.devSamples} names={settings.playerNames} />
           </div>
         </section>
       )}
