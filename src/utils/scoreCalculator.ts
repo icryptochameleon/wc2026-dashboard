@@ -548,10 +548,17 @@ export function computeThirdPlaceRace(matches: MatchResult[], groups: Record<str
     (a, b) =>
       b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.group.localeCompare(b.group),
   );
+  // 全 12 グループ消化済みなら、3 位順位は勝点→得失点差→総得点のタイブレークで
+  // 既に最終確定している。残り試合が無いので上位 8 = 突破確定・9 位以下 = 敗退確定。
+  // (勝点だけ見る下の保守的ヒューリスティックは、同勝点を得失点差で分けられず、
+  //  確定済みの 8 位 [例: セネガル] を確定扱いにできないため、ここで先に決める)
+  const allGroupsComplete = entries.every((e) => e.complete);
   return entries.map((e, i) => {
     const inZone = i < 8;
     let status: ThirdPlaceEntry['status'] = inZone ? 'zone' : 'out';
-    if (e.complete) {
+    if (allGroupsComplete) {
+      status = inZone ? 'confirmed' : 'out';
+    } else if (e.complete) {
       // 他グループ 3 位が最大化しても、自分以上になり得る数が 7 以下なら確定
       let canBeAtOrAbove = 0;
       for (const [letter, mx] of Object.entries(maxByGroup)) {
